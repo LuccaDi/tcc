@@ -11,7 +11,7 @@ import { HomeService } from '../../services/home.service';
 export class HomeComponent implements OnInit {
   private data: Home[] = [];
   private svg: any;
-  private graphs: any;
+  private charts: any;
   private rects: any;
 
   private marginAll = 30;
@@ -22,12 +22,12 @@ export class HomeComponent implements OnInit {
 
   private symbol = d3.symbol();
 
-  private columns = 2;
-  private rows = 2;
-  private numCharts = 4;
+  private columns = 6;
+  private rows = 1;
+  private numCharts = 6;
 
-  private eixosX = ['cRocha', 'cRocha', 'cRocha', 'cRocha'];
-  private eixosY = ['nkrg1', 'nkrog1', 'nkrg1', 'nkrog1'];
+  private eixosX = ['cRocha', 'cRocha', 'cRocha', 'nkrg1', 'nkrg1', 'nkrog1'];
+  private eixosY = ['nkrg1', 'nkrog1', 'nkrow1', 'nkrog1', 'nkrow1', 'nkrow1'];
 
   private x: any;
   private y: any;
@@ -49,6 +49,7 @@ export class HomeComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.data = await this.homeService.getData().toPromise();
+    // console.log(d3.range(this.columns));
 
     this.drawPlot();
     this.addDots();
@@ -109,19 +110,11 @@ export class HomeComponent implements OnInit {
 
     this.addClip();
 
-    this.graphs = this.svg.append('g').attr('class', 'graphs');
+    this.charts = this.svg.append('g').attr('class', 'charts');
 
     this.rects = this.svg.append('g').attr('class', 'rects');
 
-    this.graphs
-      .selectAll('g')
-      .data(d3.cross(d3.range(this.columns), d3.range(this.rows)))
-      .join('g')
-      .attr(
-        'transform',
-        ([i, j]: any) =>
-          'translate(' + i * this.size + ',' + j * this.size + ')'
-      );
+    this.addCharts();
 
     this.addRect();
 
@@ -137,6 +130,9 @@ export class HomeComponent implements OnInit {
   }
 
   private zoomed = ({ transform }: any, id: number) => {
+    let row: any = document.getElementById('' + id)?.getAttribute('row');
+    let col: any = document.getElementById('' + id)?.getAttribute('col');
+
     const newXScale = transform
       .rescaleX(this.x)
       .interpolate(d3.interpolateRound);
@@ -147,21 +143,19 @@ export class HomeComponent implements OnInit {
     this.tempGx.select('.x' + id).call(this.xAxis.scale(newXScale));
     this.tempGy.select('.y' + id).call(this.yAxis.scale(newYScale));
 
-    this.graphs.select('.graph' + id).attr('transform', ([i, j]: any) => {
-      console.log('i: ' + i);
-      console.log('j: ' + j);
-      return (
-        'translate(' +
-        (i * this.size + transform.x) +
+    this.charts.select('.chart' + id).attr(
+      'transform',
+
+      'translate(' +
+        (col * this.size + transform.x) +
         ',' +
-        (j * this.size + transform.y) +
+        (row * this.size + transform.y) +
         ') scale(' +
         transform.k +
         ')'
-      );
-    });
+    );
 
-    d3.select('.graph' + id)
+    d3.select('.chart' + id)
       .selectAll('.dot')
       .attr('d', this.symbol.size(50 / transform.k));
 
@@ -173,11 +167,32 @@ export class HomeComponent implements OnInit {
       .attr('y', this.marginAll / 2 - transform.y);
   };
 
+  private addCharts() {
+    let charts = 0;
+
+    for (let row = 0; row < this.rows; row++) {
+      for (let col = 0; col < this.columns; col++) {
+        if (charts >= this.numCharts) {
+          return;
+        }
+        this.charts
+          // .selectAll('g')
+          .append('g')
+          .attr(
+            'transform',
+            'translate(' + col * this.size + ',' + row * this.size + ')'
+          );
+
+        charts++;
+      }
+    }
+  }
+
   private addClip() {
     let charts = 0;
 
-    for (let i = 0; i < this.columns; i++) {
-      for (let j = 0; j < this.rows; j++) {
+    for (let row = 0; row < this.rows; row++) {
+      for (let col = 0; col < this.columns; col++) {
         if (charts >= this.numCharts) {
           return;
         }
@@ -198,6 +213,7 @@ export class HomeComponent implements OnInit {
 
   private addRect() {
     let i = 0;
+    let charts = 0;
 
     let id: number;
 
@@ -210,31 +226,40 @@ export class HomeComponent implements OnInit {
       // ])
       .on('zoom', (transform) => this.zoomed(transform, id));
 
-    this.rects
-      .selectAll('rect')
-      .data(d3.cross(d3.range(this.columns), d3.range(this.rows)))
-      .join('rect')
-      .attr(
-        'transform',
-        ([i, j]: any) =>
-          'translate(' + i * this.size + ',' + j * this.size + ')'
-      )
-      .attr('fill', '#FFFFFF')
-      .attr('fill-opacity', '0.0')
-      .attr('stroke', '#aaa')
-      .attr('x', this.marginAll / 2)
-      .attr('y', this.marginAll / 2)
-      .attr('width', this.size - this.marginAll)
-      .attr('height', this.size - this.marginAll)
-      .attr('id', () => i++)
-      // .call(zoom);
-      .on('mouseover', function (d: any) {
-        id = d.srcElement.id;
-      })
-      // .on('wheel', function (d: any) {
-      //   id = d.srcElement.id;
-      // })
-      .call(zoom);
+    for (let row = 0; row < this.rows; row++) {
+      for (let col = 0; col < this.columns; col++) {
+        if (charts >= this.numCharts) {
+          return;
+        }
+        this.rects
+          // .selectAll('rect')
+          .append('rect')
+          .attr('col', col)
+          .attr('row', row)
+          .attr(
+            'transform',
+            'translate(' + col * this.size + ',' + row * this.size + ')'
+          )
+          .attr('fill', '#FFFFFF')
+          .attr('fill-opacity', '0.0')
+          .attr('stroke', '#aaa')
+          .attr('x', this.marginAll / 2)
+          .attr('y', this.marginAll / 2)
+          .attr('width', this.size - this.marginAll)
+          .attr('height', this.size - this.marginAll)
+          .attr('id', () => i++)
+          // .call(zoom);
+          .on('mouseover', function (d: any) {
+            id = d.srcElement.id;
+          })
+          // .on('wheel', function (d: any) {
+          //   id = d.srcElement.id;
+          // })
+          .call(zoom);
+
+        charts++;
+      }
+    }
   }
 
   private addDots() {
@@ -242,9 +267,9 @@ export class HomeComponent implements OnInit {
     let g = 0;
     let c = 0;
 
-    this.graphs
+    this.charts
       .selectAll('g')
-      .attr('class', () => 'graph' + g++)
+      .attr('class', () => 'chart' + g++)
       .attr('clip-path', () => `url(#clip${c++})`)
       .selectAll('path')
       .data(this.data)
@@ -291,8 +316,8 @@ export class HomeComponent implements OnInit {
   private addX() {
     let charts = 0;
 
-    for (let i = 0; i < this.columns; i++) {
-      for (let j = 1; j <= this.rows; j++) {
+    for (let row = 1; row <= this.rows; row++) {
+      for (let col = 0; col < this.columns; col++) {
         if (charts >= this.numCharts) {
           return;
         }
@@ -303,9 +328,9 @@ export class HomeComponent implements OnInit {
           .attr(
             'transform',
             'translate(' +
-              i * this.size +
+              col * this.size +
               ',' +
-              (this.size * j - this.marginAll / 2) +
+              (this.size * row - this.marginAll / 2) +
               ')'
           )
           .call(this.xAxis);
@@ -320,8 +345,8 @@ export class HomeComponent implements OnInit {
   private addY() {
     let charts = 0;
 
-    for (let i = 0; i < this.columns; i++) {
-      for (let j = 0; j < this.rows; j++) {
+    for (let row = 0; row < this.rows; row++) {
+      for (let col = 0; col < this.columns; col++) {
         if (charts >= this.numCharts) {
           return;
         }
@@ -332,9 +357,9 @@ export class HomeComponent implements OnInit {
           .attr(
             'transform',
             'translate(' +
-              (this.marginAll / 2 + this.size * i) +
+              (this.marginAll / 2 + this.size * col) +
               ',' +
-              j * this.size +
+              row * this.size +
               ')'
           )
           .call(this.yAxis);
