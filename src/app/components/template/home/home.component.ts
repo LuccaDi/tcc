@@ -83,6 +83,8 @@ export class HomeComponent implements OnInit {
     this.drawPlot();
     this.addDots();
     this.colorCharts();
+
+    console.log(this.x);
   }
 
   private drawPlot(): void {
@@ -159,7 +161,7 @@ export class HomeComponent implements OnInit {
         this.x[chart] = d3
           .scaleLinear()
           .domain(extentDomain)
-          .rangeRound([this.marginAll / 2, this.size - this.marginAll / 2]);
+          .range([this.marginAll / 2, this.size - this.marginAll / 2]);
 
         this.xAxis = d3
           .axisBottom(this.x[chart])
@@ -419,14 +421,21 @@ export class HomeComponent implements OnInit {
           .size(50)
       )
       .attr('transform', (d: any, i: any) => {
+        // console.log(d);
+
         if (i == 0) {
+          // console.log('i: ' + i);
           chart++;
+          // console.log('chart: ' + chart);
         }
+
+        console.log('id: ' + d.id);
+        console.log(this.x[chart](d[this.eixosX[chart]].value));
 
         if (chart < 6) {
           return (
             'translate(' +
-            (this.x[chart](d[this.eixosX[chart]].value) + 0.5) +
+            this.x[chart](d[this.eixosX[chart]].value) +
             ',' +
             this.y[chart](d[this.eixosY[chart]].value) +
             ')'
@@ -434,7 +443,7 @@ export class HomeComponent implements OnInit {
         } else {
           return (
             'translate(' +
-            (this.x[chart](d[this.eixosX[chart]].value) + 0.5) +
+            this.x[chart](d[this.eixosX[chart]].value) +
             ',' +
             this.y[chart](d[this.eixosX[chart]].cprob) +
             ')'
@@ -457,6 +466,8 @@ export class HomeComponent implements OnInit {
         let lineY;
 
         let dotId = d.srcElement.attributes.id.value;
+
+        console.log(dotId);
 
         this.data.map((data: any) => {
           if (data.id == dotId) {
