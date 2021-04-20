@@ -72,6 +72,9 @@ export class HomeComponent implements OnInit {
 
   private size: any;
 
+  private chartColor = '#d3d3d3';
+  // private chartColor = 'red';
+
   constructor(private homeService: HomeService) {}
 
   async ngOnInit(): Promise<void> {
@@ -79,6 +82,7 @@ export class HomeComponent implements OnInit {
 
     this.drawPlot();
     this.addDots();
+    this.colorCharts();
   }
 
   private drawPlot(): void {
@@ -105,11 +109,11 @@ export class HomeComponent implements OnInit {
       .attr('class', 'content');
     // .call(zoom);
 
-    this.tempGx = this.svg.append('g').attr('class', 'x-axis');
+    this.tempGx = this.svg.append('g').attr('class', 'xAxis');
 
     this.addX();
 
-    this.tempGy = this.svg.append('g').attr('class', 'y-axis');
+    this.tempGy = this.svg.append('g').attr('class', 'yAxis');
     this.addY();
 
     this.def = this.svg.append('defs');
@@ -159,7 +163,7 @@ export class HomeComponent implements OnInit {
 
         this.xAxis = d3
           .axisBottom(this.x[chart])
-          .ticks(12)
+          .ticks(6, '~s')
           .tickSize(-this.size + this.marginAll);
 
         this.newXScale[chart] = this.x[chart];
@@ -177,7 +181,7 @@ export class HomeComponent implements OnInit {
               ')'
           )
           .call(this.xAxis);
-        // .call((g) => g.select('.domain').remove())
+        // .call((g: any) => g.select('.domain').remove());
         // .call((g) => g.selectAll('.tick line').attr('stroke', '#ddd'));
 
         chart++;
@@ -212,7 +216,7 @@ export class HomeComponent implements OnInit {
 
         this.yAxis = d3
           .axisLeft(this.y[chart])
-          .ticks(12)
+          .ticks(6)
           .tickSize(-this.size + this.marginAll);
 
         this.newYScale[chart] = this.y[chart];
@@ -250,6 +254,7 @@ export class HomeComponent implements OnInit {
       .interpolate(d3.interpolateRound);
 
     this.tempGx.select('#x' + id).call(this.xAxis.scale(this.newXScale[id]));
+
     this.tempGy.select('#y' + id).call(this.yAxis.scale(this.newYScale[id]));
 
     this.charts.select('#chart' + id).attr(
@@ -286,6 +291,8 @@ export class HomeComponent implements OnInit {
       .style('stroke-width', 1.5 / transform.k)
       .attr('x1', (this.marginAll / 2 - transform.x) / transform.k) // y position of the first end of the line
       .attr('x2', (this.size - this.marginAll / 2 - transform.x) / transform.k); // y position of the second end of the line
+
+    this.colorCharts();
   };
 
   private addCharts() {
@@ -340,7 +347,7 @@ export class HomeComponent implements OnInit {
 
     const zoom: any = d3
       .zoom()
-      .scaleExtent([0.5, 5])
+      // .scaleExtent([0.5, 5])
       // .translateExtent([
       //   [0, 0],
       //   [this.width, this.height],
@@ -363,7 +370,7 @@ export class HomeComponent implements OnInit {
           )
           .attr('fill', '#FFFFFF')
           .attr('fill-opacity', '0.0')
-          .attr('stroke', '#aaa')
+          // .attr('stroke', '#aaa')
           .attr('x', this.marginAll / 2)
           .attr('y', this.marginAll / 2)
           .attr('width', this.size - this.marginAll)
@@ -543,5 +550,33 @@ export class HomeComponent implements OnInit {
           }
         });
       });
+  }
+
+  private colorCharts() {
+    d3.select('.xAxis')
+      .selectAll('g')
+      .select('.domain')
+      .attr('stroke', this.chartColor);
+    d3.select('.xAxis')
+      .selectAll('g')
+      .select('.tick line')
+      .attr('stroke', this.chartColor);
+    d3.select('.xAxis')
+      .selectAll('g')
+      .select('.tick text')
+      .attr('fill', this.chartColor);
+
+    d3.select('.yAxis')
+      .selectAll('g')
+      .select('.domain')
+      .attr('stroke', this.chartColor);
+    d3.select('.yAxis')
+      .selectAll('g')
+      .select('.tick line')
+      .attr('stroke', this.chartColor);
+    d3.select('.yAxis')
+      .selectAll('g')
+      .select('.tick text')
+      .attr('fill', this.chartColor);
   }
 }
