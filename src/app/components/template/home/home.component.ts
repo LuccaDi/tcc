@@ -23,8 +23,8 @@ export class HomeComponent implements OnInit {
   private symbol = d3.symbol();
 
   private columns = 6;
-  private rows = 2;
-  private numCharts = 12;
+  private rows = 5;
+  private numCharts = 26;
 
   private eixosX = [
     'cRocha',
@@ -39,14 +39,28 @@ export class HomeComponent implements OnInit {
     'nkrow1',
     'nkrow2',
     'nkrw1',
+    'npcow1',
+    'krgSor1',
+    'kroSwi1',
+    'krwSor1',
+    'kvkh',
+    'kFrat',
+    'dwoc',
+    'sgc1',
+    'sor1',
+    'swi1',
+    'npAt',
+    'wpAt',
+    'voip',
+    'fro',
   ];
   private eixosY = ['nkrg1', 'nkrog1', 'nkrow1', 'nkrog1', 'nkrow1', 'nkrow1'];
 
   private x: any = [];
   private y: any = [];
 
-  private newXScale: any;
-  private newYScale: any;
+  private newXScale: any = [];
+  private newYScale: any = [];
 
   private xAxis: any;
   private yAxis: any;
@@ -102,9 +116,9 @@ export class HomeComponent implements OnInit {
 
     this.addClip();
 
-    this.charts = this.svg.append('g').attr('class', 'charts');
-
     this.rects = this.svg.append('g').attr('class', 'rects');
+
+    this.charts = this.svg.append('g').attr('class', 'charts');
 
     this.addCharts();
 
@@ -148,10 +162,12 @@ export class HomeComponent implements OnInit {
           .ticks(12)
           .tickSize(-this.size + this.marginAll);
 
+        this.newXScale[chart] = this.x[chart];
+
         // selectAll('.x-axis')
         this.tempGx
           .append('g')
-          .attr('class', 'x' + chart)
+          .attr('id', 'x' + chart)
           .attr(
             'transform',
             'translate(' +
@@ -188,8 +204,6 @@ export class HomeComponent implements OnInit {
           extentDomain = [0, 1];
         }
 
-        console.log(extentDomain);
-
         this.y[chart] = d3
           .scaleLinear()
           .domain(extentDomain)
@@ -201,10 +215,12 @@ export class HomeComponent implements OnInit {
           .ticks(12)
           .tickSize(-this.size + this.marginAll);
 
+        this.newYScale[chart] = this.y[chart];
+
         // selectAll('.y-axis')
         this.tempGy
           .append('g')
-          .attr('class', 'y' + chart)
+          .attr('id', 'y' + chart)
           .attr(
             'transform',
             'translate(' +
@@ -226,17 +242,17 @@ export class HomeComponent implements OnInit {
     let row: any = document.getElementById('' + id)?.getAttribute('row');
     let col: any = document.getElementById('' + id)?.getAttribute('col');
 
-    const newXScale = transform
+    this.newXScale[id] = transform
       .rescaleX(this.x[id])
       .interpolate(d3.interpolateRound);
-    const newYScale = transform
+    this.newYScale[id] = transform
       .rescaleY(this.y[id])
       .interpolate(d3.interpolateRound);
 
-    this.tempGx.select('.x' + id).call(this.xAxis.scale(newXScale));
-    this.tempGy.select('.y' + id).call(this.yAxis.scale(newYScale));
+    this.tempGx.select('#x' + id).call(this.xAxis.scale(this.newXScale[id]));
+    this.tempGy.select('#y' + id).call(this.yAxis.scale(this.newYScale[id]));
 
-    this.charts.select('.chart' + id).attr(
+    this.charts.select('#chart' + id).attr(
       'transform',
 
       'translate(' +
@@ -248,7 +264,7 @@ export class HomeComponent implements OnInit {
         ')'
     );
 
-    d3.select('.chart' + id)
+    d3.select('#chart' + id)
       .selectAll('.dot')
       .attr('d', this.symbol.size(50 / transform.k));
 
@@ -258,6 +274,18 @@ export class HomeComponent implements OnInit {
       .attr('transform', 'scale(' + 1 / transform.k + ')')
       .attr('x', this.marginAll / 2 - transform.x)
       .attr('y', this.marginAll / 2 - transform.y);
+
+    d3.select('#chart' + id)
+      .select('#x')
+      .style('stroke-width', 1.5 / transform.k)
+      .attr('y1', (this.size - this.marginAll / 2 - transform.y) / transform.k) // y position of the first end of the line
+      .attr('y2', (this.marginAll / 2 - transform.y) / transform.k); // y position of the second end of the line
+
+    d3.select('#chart' + id)
+      .select('#y')
+      .style('stroke-width', 1.5 / transform.k)
+      .attr('x1', (this.marginAll / 2 - transform.x) / transform.k) // y position of the first end of the line
+      .attr('x2', (this.size - this.marginAll / 2 - transform.x) / transform.k); // y position of the second end of the line
   };
 
   private addCharts() {
@@ -362,11 +390,12 @@ export class HomeComponent implements OnInit {
 
     this.charts
       .selectAll('g')
-      .attr('class', () => 'chart' + g++)
+      .attr('id', () => 'chart' + g++)
       .attr('clip-path', () => `url(#clip${c++})`)
       .selectAll('path')
       .data(this.data)
       .join('path')
+      .attr('id', (d: any) => d.id)
       .attr('class', 'dot')
       .attr(
         'd',
@@ -387,7 +416,7 @@ export class HomeComponent implements OnInit {
           chart++;
         }
 
-        if (chart <= 5) {
+        if (chart < 6) {
           return (
             'translate(' +
             (this.x[chart](d[this.eixosX[chart]].value) + 0.5) +
@@ -413,6 +442,106 @@ export class HomeComponent implements OnInit {
         } else {
           return 'blue';
         }
+      })
+      .on('click', (d: any) => {
+        let chart = 0;
+
+        let lineX;
+        let lineY;
+
+        let dotId = d.srcElement.attributes.id.value;
+
+        this.data.map((data: any) => {
+          if (data.id == dotId) {
+            this.charts.selectAll('g').selectAll('line').remove();
+
+            this.charts
+              .selectAll('g')
+              .append('line')
+              .attr('id', 'x')
+              .style('stroke', 'red') // colour the line
+              .style('stroke-width', 1.5)
+              .style('stroke-linejoin', 'round')
+              .style('stroke-linecap', 'round')
+              .attr('x1', () => {
+                lineX = this.eixosX[chart];
+
+                return this.x[chart++](data[lineX].value);
+              }) // x position of the first end of the line
+              .attr('y1', () => {
+                if (chart >= this.numCharts) {
+                  chart = 0;
+                }
+
+                return this.y[chart](this.newYScale[chart++].domain()[0]);
+              }) // y position of the first end of the line
+              .attr('x2', () => {
+                if (chart >= this.numCharts) {
+                  chart = 0;
+                }
+
+                lineX = this.eixosX[chart];
+
+                return this.x[chart++](data[lineX].value);
+              }) // x position of the second end of the line
+              .attr('y2', () => {
+                if (chart >= this.numCharts) {
+                  chart = 0;
+                }
+
+                return this.y[chart](this.newYScale[chart++].domain()[1]);
+              }); // y position of the second end of the line
+
+            this.charts
+              .selectAll('g')
+              .append('line')
+              .attr('id', 'y')
+              .style('stroke', 'red') // colour the line
+              .style('stroke-width', 1.5)
+              .style('stroke-linejoin', 'round')
+              .style('stroke-linecap', 'round')
+              .attr('x1', () => {
+                if (chart >= this.numCharts) {
+                  chart = 0;
+                }
+
+                return this.x[chart](this.newXScale[chart++].domain()[0]);
+              }) // x position of the first end of the line
+              .attr('y1', () => {
+                if (chart >= this.numCharts) {
+                  chart = 0;
+                }
+
+                if (chart < 6) {
+                  lineY = this.eixosY[chart];
+                  return this.y[chart++](data[lineY].value);
+                } else {
+                  lineY = this.eixosX[chart];
+                  return this.y[chart++](data[lineY].cprob);
+                }
+              }) // y position of the first end of the line
+              .attr('x2', () => {
+                if (chart >= this.numCharts) {
+                  chart = 0;
+                }
+
+                return this.x[chart](this.newXScale[chart++].domain()[1]);
+              }) // x position of the second end of the line
+              .attr('y2', () => {
+                if (chart >= this.numCharts) {
+                  chart = 0;
+                }
+
+                if (chart < 6) {
+                  lineY = this.eixosY[chart];
+                  return this.y[chart++](data[lineY].value);
+                } else {
+                  lineY = this.eixosX[chart];
+                  return this.y[chart++](data[lineY].cprob);
+                }
+              }); // y position of the second end of the line
+          }
+        });
       });
   }
 }
