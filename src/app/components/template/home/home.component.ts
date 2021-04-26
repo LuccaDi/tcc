@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import * as d3 from 'd3';
-import { Home } from '../../model/home.model';
+import { Chart } from '../../model/chart.model';
 import { HomeService } from '../../services/home.service';
 
 @Component({
@@ -10,7 +10,7 @@ import { HomeService } from '../../services/home.service';
   styleUrls: ['./home.component.css'],
 })
 export class HomeComponent implements OnInit {
-  private data: Home[] = [];
+  private data: Chart[] = [];
   private svg: any;
   private charts: any;
   private rects: any;

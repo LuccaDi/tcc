@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/internal/Observable';
-import { Home } from '../model/home.model';
+import { Chart } from '../model/chart.model';
 
 @Injectable({
   providedIn: 'root',
@@ -11,7 +11,7 @@ export class HomeService {
 
   constructor(private http: HttpClient) {}
 
-  getData(): Observable<Home[]> {
-    return this.http.get<Home[]>(this.baseURL);
+  getData(): Observable<Chart[]> {
+    return this.http.get<Chart[]>(this.baseURL);
   }
 }

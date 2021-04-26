@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterStateSnapshot } from '@angular/router';
 import * as d3 from 'd3';
-import { Home } from '../../model/home.model';
+import { Chart } from '../../model/chart.model';
 import { HomeService } from '../../services/home.service';
 
 @Component({
@@ -10,7 +10,7 @@ import { HomeService } from '../../services/home.service';
   styleUrls: ['./expand-chart.component.css'],
 })
 export class ExpandChartComponent implements OnInit {
-  private data: Home[] = [];
+  private data: Chart[] = [];
   private id: any;
 
   private marginAll = 30;
@@ -393,7 +393,7 @@ export class ExpandChartComponent implements OnInit {
     this.colorChart();
   };
 
-  private displayInfo(data: Home) {
+  private displayInfo(data: Chart) {
     let keys = Object.keys(data).filter((d) => {
       return d != 'predefined' && d != 'rm';
     });
