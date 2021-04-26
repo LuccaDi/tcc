@@ -1,0 +1,19 @@
+#tileHeader {
+  min-height: 50px;
+  min-width: 280px;
+}
+
+#tileChart {
+  /* min-height: 300px; */
+  min-width: 280px;
+}
+
+#dotsInfo {
+  min-width: 280px;
+  display: flex;
+}
+
+/* #svgExpandedChart {
+  min-height: 300px;
+  min-width: 300px;
+} */
