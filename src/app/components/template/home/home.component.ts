@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import * as d3 from 'd3';
-import { Home } from '../../model/home.model';
+import { Chart } from '../../model/chart.model';
 import { HomeService } from '../../services/home.service';
 
 @Component({
@@ -9,7 +10,7 @@ import { HomeService } from '../../services/home.service';
   styleUrls: ['./home.component.css'],
 })
 export class HomeComponent implements OnInit {
-  private data: Home[] = [];
+  private data: Chart[] = [];
   private svg: any;
   private charts: any;
   private rects: any;
@@ -75,7 +76,7 @@ export class HomeComponent implements OnInit {
   private chartColor = '#d3d3d3';
   // private chartColor = 'red';
 
-  constructor(private homeService: HomeService) {}
+  constructor(private homeService: HomeService, private router: Router) {}
 
   async ngOnInit(): Promise<void> {
     this.data = await this.homeService.getData().toPromise();
@@ -83,8 +84,6 @@ export class HomeComponent implements OnInit {
     this.drawPlot();
     this.addDots();
     this.colorCharts();
-
-    console.log(this.x);
   }
 
   private drawPlot(): void {
@@ -347,6 +346,11 @@ export class HomeComponent implements OnInit {
 
     let id: number;
 
+    let url: string;
+
+    let features =
+      'width=900, height=650,menubar=yes,location=no,resizable=no,scrollbars=no,status=no';
+
     const zoom: any = d3
       .zoom()
       // .scaleExtent([0.5, 5])
@@ -361,6 +365,36 @@ export class HomeComponent implements OnInit {
         if (chart >= this.numCharts) {
           return;
         }
+
+        url = this.router.serializeUrl(
+          this.router.createUrlTree([`/expandChart/${chart}`])
+        );
+
+        //add expand button
+        this.rects
+          .append('a')
+          .attr('id', 'btn' + chart)
+          .attr(
+            'transform',
+            'translate(' +
+              ((col + 1) * this.size - this.marginAll) +
+              ',' +
+              row * this.size +
+              ')'
+          )
+          .attr('href', '')
+          .attr(
+            'onclick',
+            `window.open('${url}', '_blank', '${features}'); return false;`
+          )
+          .append('image')
+          .attr('height', '20px')
+          .attr('width', '20px')
+          .attr(
+            'href',
+            '../../../../assets/img/outline_open_in_new_black_24dp.png'
+          );
+
         this.rects
           // .selectAll('rect')
           .append('rect')
@@ -428,10 +462,6 @@ export class HomeComponent implements OnInit {
           chart++;
           // console.log('chart: ' + chart);
         }
-
-        console.log('id: ' + d.id);
-        console.log(this.x[chart](d[this.eixosX[chart]].value));
-
         if (chart < 6) {
           return (
             'translate(' +
@@ -466,8 +496,6 @@ export class HomeComponent implements OnInit {
         let lineY;
 
         let dotId = d.srcElement.attributes.id.value;
-
-        console.log(dotId);
 
         this.data.map((data: any) => {
           if (data.id == dotId) {

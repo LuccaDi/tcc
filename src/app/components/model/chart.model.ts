@@ -1,4 +1,4 @@
-export interface Home {
+export interface Chart {
   predefined: boolean;
   rm: boolean;
   id: number;

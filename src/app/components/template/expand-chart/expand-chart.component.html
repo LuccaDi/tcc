@@ -1,0 +1,23 @@
+<figure id="expandChart">
+  <mat-grid-list id='gridList' [cols]="expandedChartWidth" rowHeight="10:1" (window:resize)="onResize()">
+    <!-- <mat-grid-tile *ngFor="let tile of tiles" [colspan]="tile.cols" [style.background]="tile.color">
+      {{tile.text}}
+    </mat-grid-tile> -->
+    <mat-grid-tile id='tileChart' rowspan='10'>
+      <svg id='svgExpandedChart' height="100%" width="100%">
+        <g>
+
+        </g>
+      </svg>
+
+    </mat-grid-tile>
+
+    <mat-grid-tile id='tileHeader' rowspan='-1'>
+      <mat-grid-tile-header>Click on the points to display information</mat-grid-tile-header>
+    </mat-grid-tile>
+
+    <mat-grid-tile id="dotsInfo">
+
+    </mat-grid-tile>
+  </mat-grid-list>
+</figure>
