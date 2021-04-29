@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import * as d3 from 'd3';
+import { line } from 'd3';
 import { Chart } from '../../model/chart.model';
 import { HomeService } from '../../services/home.service';
 
@@ -11,6 +12,7 @@ import { HomeService } from '../../services/home.service';
 })
 export class HomeComponent implements OnInit {
   private data: Chart[] = [];
+  private rms: Chart[] = [];
   private svg: any;
   private charts: any;
   private rects: any;
@@ -80,10 +82,12 @@ export class HomeComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.data = await this.homeService.getData().toPromise();
+    this.rms = await this.homeService.getRMs();
 
     this.drawPlot();
     this.addDots();
     this.colorCharts();
+    this.drawRiskCurveLines();
   }
 
   private drawPlot(): void {
@@ -293,6 +297,11 @@ export class HomeComponent implements OnInit {
       .attr('x1', (this.marginAll / 2 - transform.x) / transform.k) // y position of the first end of the line
       .attr('x2', (this.size - this.marginAll / 2 - transform.x) / transform.k); // y position of the second end of the line
 
+    //Resize risk curve lines
+    d3.select('#chart' + id)
+      .selectAll('.riskCurveLines')
+      .style('stroke-width', 1.5 / transform.k);
+
     this.colorCharts();
   };
 
@@ -486,7 +495,7 @@ export class HomeComponent implements OnInit {
         } else if (d.rm == true) {
           return 'green';
         } else {
-          return 'blue';
+          return '#a28ad2';
         }
       })
       .on('click', (d: any) => {
@@ -499,12 +508,13 @@ export class HomeComponent implements OnInit {
 
         this.data.map((data: any) => {
           if (data.id == dotId) {
-            this.charts.selectAll('g').selectAll('line').remove();
+            this.charts.selectAll('g').selectAll('.brushing').remove();
 
             this.charts
               .selectAll('g')
               .append('line')
               .attr('id', 'x')
+              .attr('class', 'brushing')
               .style('stroke', 'red') // colour the line
               .style('stroke-width', 1.5)
               .style('stroke-linejoin', 'round')
@@ -542,6 +552,7 @@ export class HomeComponent implements OnInit {
               .selectAll('g')
               .append('line')
               .attr('id', 'y')
+              .attr('class', 'brushing')
               .style('stroke', 'red') // colour the line
               .style('stroke-width', 1.5)
               .style('stroke-linejoin', 'round')
@@ -617,5 +628,65 @@ export class HomeComponent implements OnInit {
       .selectAll('g')
       .select('.tick text')
       .attr('fill', this.chartColor);
+  }
+
+  private drawRiskCurveLines() {
+    let chart: number;
+    let sortedRMs: Chart[];
+    let lineX: any;
+
+    for (chart = 6; chart < this.numCharts; chart++) {
+      let cumulativeProb: number = 1;
+      let previousRM: any;
+      sortedRMs = this.homeService.sortBy(this.rms, this.eixosX[chart]);
+      lineX = this.eixosX[chart];
+
+      sortedRMs.map((rm: any, index: number) => {
+        //vertical lines
+        d3.select(`#chart${chart}`)
+          .append('line')
+          .attr('class', 'riskCurveLines')
+          .style('stroke', 'black') // colour the line
+          .style('stroke-linejoin', 'round')
+          .style('stroke-linecap', 'round')
+          .attr('x1', () => {
+            return this.x[chart](rm[lineX].value);
+          }) // x position of the first end of the line
+          .attr('y1', () => {
+            return this.y[chart](cumulativeProb);
+          }) // y position of the first end of the line
+          .attr('x2', () => {
+            return this.x[chart](rm[lineX].value);
+          }) // x position of the second end of the line
+          .attr('y2', () => {
+            cumulativeProb -= rm.cprobRM;
+            return this.y[chart](cumulativeProb);
+          }); // y position of the second end of the line
+
+        //horizontal lines
+        if (index == 0) {
+          return;
+        }
+        previousRM = sortedRMs[index - 1];
+        d3.select(`#chart${chart}`)
+          .append('line')
+          .attr('class', 'riskCurveLines')
+          .style('stroke', 'black') // colour the line
+          .style('stroke-linejoin', 'round')
+          .style('stroke-linecap', 'round')
+          .attr('x1', () => {
+            return this.x[chart](previousRM[lineX].value);
+          }) // x position of the first end of the line
+          .attr('y1', () => {
+            return this.y[chart](cumulativeProb + rm.cprobRM);
+          }) // y position of the first end of the line
+          .attr('x2', () => {
+            return this.x[chart](rm[lineX].value);
+          }) // x position of the second end of the line
+          .attr('y2', () => {
+            return this.y[chart](cumulativeProb + rm.cprobRM);
+          }); // y position of the second end of the line
+      });
+    }
   }
 }

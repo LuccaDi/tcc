@@ -11,6 +11,7 @@ import { HomeService } from '../../services/home.service';
 })
 export class ExpandChartComponent implements OnInit {
   private data: Chart[] = [];
+  private rms: Chart[] = [];
   private id: any;
 
   private marginAll = 30;
@@ -75,10 +76,14 @@ export class ExpandChartComponent implements OnInit {
     this.id = this.route.snapshot.params.id;
 
     this.data = await this.homeService.getData().toPromise();
+    this.rms = await this.homeService.getRMs();
 
     this.drawPlot();
     this.addDots();
     this.colorChart();
+    if (this.id > 5) {
+      this.drawRiskCurveLines();
+    }
   }
 
   onResize() {
@@ -262,7 +267,7 @@ export class ExpandChartComponent implements OnInit {
         } else if (d.rm == true) {
           return 'green';
         } else {
-          return 'blue';
+          return '#a28ad2';
         }
       })
       .on('click', (d: any) => {
@@ -275,11 +280,12 @@ export class ExpandChartComponent implements OnInit {
 
         this.data.map((data: any) => {
           if (data.id == dotId) {
-            d3.select('#chart').selectAll('line').remove();
+            d3.select('#chart').selectAll('.brushing').remove();
 
             d3.select('#chart')
               .append('line')
               .attr('id', 'x')
+              .attr('class', 'brushing')
               .style('stroke', 'red') // colour the line
               .style('stroke-width', 1.5)
               .style('stroke-linejoin', 'round')
@@ -304,6 +310,7 @@ export class ExpandChartComponent implements OnInit {
             d3.select('#chart')
               .append('line')
               .attr('id', 'y')
+              .attr('class', 'brushing')
               .style('stroke', 'red') // colour the line
               .style('stroke-width', 1.5)
               .style('stroke-linejoin', 'round')
@@ -390,6 +397,11 @@ export class ExpandChartComponent implements OnInit {
         (this.width - this.marginAll / 2 - transform.x) / transform.k
       ); // y position of the second end of the line
 
+    //Resize risk curve lines
+    d3.select('#chart')
+      .selectAll('.riskCurveLines')
+      .style('stroke-width', 1.5 / transform.k);
+
     this.colorChart();
   };
 
@@ -469,5 +481,62 @@ export class ExpandChartComponent implements OnInit {
       .selectAll('g')
       .select('.tick text')
       .attr('fill', this.chartColor);
+  }
+
+  private drawRiskCurveLines() {
+    let sortedRMs: Chart[];
+    let lineX: any;
+
+    let cumulativeProb: number = 1;
+    let previousRM: any;
+    sortedRMs = this.homeService.sortBy(this.rms, this.eixosX[this.id]);
+    lineX = this.eixosX[this.id];
+
+    sortedRMs.map((rm: any, index: number) => {
+      //vertical lines
+      d3.select(`#chart`)
+        .append('line')
+        .attr('class', 'riskCurveLines')
+        .style('stroke', 'black') // colour the line
+        .style('stroke-linejoin', 'round')
+        .style('stroke-linecap', 'round')
+        .attr('x1', () => {
+          return this.x(rm[lineX].value);
+        }) // x position of the first end of the line
+        .attr('y1', () => {
+          return this.y(cumulativeProb);
+        }) // y position of the first end of the line
+        .attr('x2', () => {
+          return this.x(rm[lineX].value);
+        }) // x position of the second end of the line
+        .attr('y2', () => {
+          cumulativeProb -= rm.cprobRM;
+          return this.y(cumulativeProb);
+        }); // y position of the second end of the line
+
+      //horizontal lines
+      if (index == 0) {
+        return;
+      }
+      previousRM = sortedRMs[index - 1];
+      d3.select(`#chart`)
+        .append('line')
+        .attr('class', 'riskCurveLines')
+        .style('stroke', 'black') // colour the line
+        .style('stroke-linejoin', 'round')
+        .style('stroke-linecap', 'round')
+        .attr('x1', () => {
+          return this.x(previousRM[lineX].value);
+        }) // x position of the first end of the line
+        .attr('y1', () => {
+          return this.y(cumulativeProb + rm.cprobRM);
+        }) // y position of the first end of the line
+        .attr('x2', () => {
+          return this.x(rm[lineX].value);
+        }) // x position of the second end of the line
+        .attr('y2', () => {
+          return this.y(cumulativeProb + rm.cprobRM);
+        }); // y position of the second end of the line
+    });
   }
 }
