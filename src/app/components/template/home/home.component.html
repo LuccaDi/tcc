@@ -1,2 +1,50 @@
 <app-header></app-header>
-<figure id="home"></figure>
+<figure id="home">
+  <mat-grid-list id="gridCharts" cols="4" [rowHeight]="height">
+
+    <mat-grid-tile id="tileCrossPlotRiskCurve" colspan='3' style="background-color: lightskyblue;">
+      <svg id="crossPlotRiskCurveCharts" height="100%" width="100%">
+        <g>
+
+        </g>
+
+      </svg>
+    </mat-grid-tile>
+
+    <mat-grid-tile id="tileBarChart" style="background-color: lightpink;">
+      <div style="height: 100%; width: 100%;">
+
+        <mat-card class="mat-elevation-z3" style="padding: 0px;">
+          <!-- <mat-card-header> -->
+          <!-- <mat-card-title>
+              TESTE
+            </mat-card-title> -->
+          <mat-card-actions align="end" style="padding: 20px;">
+            <a mat-list-item href="">
+              <i class="material-icons">
+                open_in_new
+              </i>
+            </a>
+          </mat-card-actions>
+          <!-- </mat-card-header> -->
+          <mat-card-content>
+            <div id="barChart" style="display: flex; flex-direction: column;">
+              <!-- <div id="col1" style="display: flex; flex-direction: column; align-items: flex-end;">
+    
+              </div>
+    
+              <div id="col2" style="display: flex; flex-direction: column;">
+    
+              </div> -->
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+
+
+      </div>
+    </mat-grid-tile>
+
+  </mat-grid-list>
+
+</figure>
