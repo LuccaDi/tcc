@@ -7,6 +7,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { HttpClientModule } from '@angular/common/http';
 import { MatGridListModule } from '@angular/material/grid-list';
+import { MatCardModule } from '@angular/material/card';
 
 import { HeaderComponent } from './components/template/header/header.component';
 import { HomeComponent } from './components/template/home/home.component';
@@ -26,6 +27,7 @@ import { ExpandChartComponent } from './components/template/expand-chart/expand-
     MatToolbarModule,
     HttpClientModule,
     MatGridListModule,
+    MatCardModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

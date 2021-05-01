@@ -19,7 +19,8 @@ export class HomeComponent implements OnInit {
 
   private marginAll = 30;
 
-  private height: any;
+  // private height: any;
+  height: any;
 
   private width: any;
 
@@ -88,29 +89,40 @@ export class HomeComponent implements OnInit {
     this.addDots();
     this.colorCharts();
     this.drawRiskCurveLines();
+    this.drawBarChart();
   }
 
   private drawPlot(): void {
     // const symbol = d3.symbol();
 
-    let home: any = document.getElementById('home');
+    // let chartWidth: any = document.getElementById('gridCharts');
+    let chartWidth: any = document.getElementById('tileCrossPlotRiskCurve')
+      ?.clientWidth;
 
-    this.width = home?.offsetWidth - this.marginAll * 2;
+    // let home: any = document.getElementById('home');
+
+    // this.width = home?.offsetWidth - this.marginAll * 2;
+    // this.width = chartWidth - this.marginAll * 2;
+    this.width = chartWidth;
 
     this.size =
       (this.width - (this.columns + 1) * this.marginAll) / this.columns +
       this.marginAll;
 
-    this.height = this.size * this.rows - this.marginAll * 2;
+    // this.height = this.size * this.rows - this.marginAll * 2;
+    this.height = this.size * this.rows;
 
     this.svg = d3
-      .select('figure#home')
-      .append('svg')
-      .attr('id', 'main')
-      .attr('width', this.width + this.marginAll * 2)
-      .attr('height', this.height + this.marginAll * 2)
-      .append('g')
-      .attr('transform', 'translate(' + this.marginAll + ',' + 0 + ')')
+      // .select('figure#home')
+      .select('#crossPlotRiskCurveCharts')
+      .attr('viewBox', `0 0 ${this.width} ${this.height}`)
+      // .append('svg')
+      // .attr('id', 'main')
+      // .attr('width', this.width + this.marginAll * 2)
+      // .attr('height', this.height + this.marginAll * 2)
+      .select('g')
+      // .attr('transform', 'translate(' + this.marginAll + ',' + 0 + ')')
+      .attr('transform', 'translate(' + this.marginAll / 2 + ',' + 0 + ')')
       .attr('class', 'content');
     // .call(zoom);
 
@@ -188,6 +200,14 @@ export class HomeComponent implements OnInit {
           .call(this.xAxis);
         // .call((g: any) => g.select('.domain').remove());
         // .call((g) => g.selectAll('.tick line').attr('stroke', '#ddd'));
+
+        //Axis Title
+        // this.tempGx
+        //   .append('text')
+        //   .attr('text-anchor', 'start')
+        //   .attr('x', col * this.size)
+        //   .attr('y', this.size * row)
+        //   .text('X axis title');
 
         chart++;
       }
@@ -638,7 +658,7 @@ export class HomeComponent implements OnInit {
     for (chart = 6; chart < this.numCharts; chart++) {
       let cumulativeProb: number = 1;
       let previousRM: any;
-      sortedRMs = this.homeService.sortBy(this.rms, this.eixosX[chart]);
+      sortedRMs = this.homeService.sortRMBy(this.rms, this.eixosX[chart]);
       lineX = this.eixosX[chart];
 
       sortedRMs.map((rm: any, index: number) => {
@@ -688,5 +708,166 @@ export class HomeComponent implements OnInit {
           }); // y position of the second end of the line
       });
     }
+  }
+
+  private drawBarChart() {
+    const barHeight: string = '20px';
+    const tempData = [
+      {
+        multIP: {
+          original: [0.14, 0.09, 0.17, 0.15, 0.21, 0.1, 0.15],
+          rmFinder: [0.0, 0.0, 0.99, 0.0, 0.01, 0.0, 0.0],
+          difference: [0.14, 0.09, 0.82, 0.15, 0.2, 0.1, 0.15],
+          sum: 1.64,
+        },
+      },
+      {
+        pvt: {
+          original: [0.31, 0.35, 0.35],
+          rmFinder: [0.01, 0.0, 0.99],
+          difference: [0.3, 0.35, 0.64],
+          sum: 1.29,
+        },
+      },
+      {
+        geo: {
+          original: [0.37, 0.34, 0.3],
+          rmFinder: [0.99, 0.0, 0.01],
+          difference: [0.62, 0.34, 0.29],
+          sum: 1.25,
+        },
+      },
+    ];
+
+    let attributes: any = [];
+
+    const teste = [
+      { name: 'E', value: 0.12702 },
+      { name: 'T', value: 0.09056 },
+      { name: 'A', value: 0.08167 },
+      { name: 'O', value: 0.07507 },
+      { name: 'I', value: 0.06966 },
+    ];
+
+    // console.log(Object.keys(tempData[0])[0]);
+    // console.log(tempData[0].multIP?.difference);
+    // console.log(Object.keys(tempData));
+
+    tempData.map((d, i) => {
+      attributes[i] = Object.keys(d)[0];
+      // console.log(Object.keys(d));
+    });
+
+    // tempData.map((d: any, i) => {
+    //   console.log(d[attributes[i]].difference);
+    // });
+    // console.log(attributes);
+
+    // Create the X-axis band scale
+    const x = d3.scaleLinear().domain([0, 1]).range([0, 45]);
+
+    const barChart = d3
+      // .select(`#tileBarChart figure div div`)
+      .select(`#barChart`)
+      .selectAll('div')
+      .data(tempData)
+      .join('div')
+      .attr('id', (d, i) => `attribute${i}`)
+      .style('display', 'flex')
+      .attr('class', 'barChart');
+
+    barChart
+      // .select('#col1')
+      // .selectAll('p')
+      // .data(tempData)
+      // .join('p')
+      .append('p')
+      .style('margin-right', '5px')
+      // .style('margin-left', 'auto')
+      // .text((d) => Object.keys(d)[0].toUpperCase())
+      .text((d, i) => attributes[i].toUpperCase());
+
+    // tempData.map((d: any, i) => {
+    //   d3.select('#col2')
+    //     .append(`div`)
+    //     .selectAll('svg')
+    //     .data(d[attributes[i]].difference)
+    //     .join('svg')
+    //     .attr('height', barHeight)
+    //     .attr('width', '45px')
+    //     .style('border', '1px solid black')
+    //     .style('margin-left', '5px')
+    //     .style('margin-bottom', '3px')
+    //     .append('g')
+    //     .attr('fill', 'steelblue');
+    // });
+    tempData.map((d: any, i) => {
+      d3.select(`#attribute${i}`)
+        .append('div')
+        .selectAll('svg')
+        .data(d[attributes[i]].difference)
+        .join('svg')
+        .attr('height', barHeight)
+        .attr('width', '45px')
+        .style('border', '1px solid black')
+        .style('margin-left', '7px')
+        // .style('margin-left', 'auto')
+        .append('g')
+        .attr('fill', 'steelblue')
+        .append('rect')
+        .attr('x', x(0))
+        // .attr("y", (d: any, i: any) => y(i))
+        .attr('width', (d: any) => x(d) - x(0))
+        // .attr('height', y.bandwidth());
+        .attr('height', barHeight);
+    });
+
+    // .append('svg')
+    // .attr('height', barHeight);
+
+    // const tempDataLength = tempData.length;
+
+    // Create the Y-axis band scale
+    const y = d3.scaleBand();
+    // .domain(d3.range(tempData.length))
+    // .domain(tempData.map((d) => d.name))
+    // .range([0, 100])
+    // .padding(0.1);
+
+    // .append('g');
+
+    // barChart
+    //   .append('svg')
+    //   .attr('height', barHeight)
+    //   .attr('width', '45px')
+    //   .style('border', '1px solid black')
+    //   .style('margin-left', 'auto')
+    //   .append('g')
+    //   .attr('fill', 'steelblue')
+    //   .selectAll('rect')
+    //   .data(teste)
+    //   .join('rect')
+    //   .attr('x', x(0))
+    //   // .attr("y", (d: any, i: any) => y(i))
+    //   .attr('width', (d) => x(d.value) - x(0))
+    //   // .attr('height', y.bandwidth());
+    //   .attr('height', barHeight);
+
+    // Draw the X-axis on the DOM
+    // barChart
+    //   .append('g')
+    //   // .append('g')
+    //   // .attr("transform", "translate(0," + this.height + ")")
+    //   .call(d3.axisBottom(x));
+
+    // .selectAll("text")
+    // .attr("transform", "translate(-10,0)rotate(-45)")
+    // .style("text-anchor", "end");
+
+    // Draw the Y-axis on the DOM
+    // barChart
+    //   .append('g')
+    //   .attr('transform', `translate(25,0)`)
+    //   .call(d3.axisLeft(y));
   }
 }

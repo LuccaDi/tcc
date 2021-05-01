@@ -10,7 +10,7 @@ export class HomeService {
   baseURL = 'https://run.mocky.io/v3/74cd378b-e49f-4592-98ec-4ae8c71697d3';
 
   testeLinesRiskURL =
-    'https://run.mocky.io/v3/010c0ea7-77d6-4cef-a68f-804d3693d106';
+    'https://run.mocky.io/v3/6db2582c-6eee-4243-a13c-ab82b77c4e14';
 
   constructor(private http: HttpClient) {}
 
@@ -28,7 +28,7 @@ export class HomeService {
     return rms;
   }
 
-  sortBy(array: Chart[], by: string): Chart[] {
+  sortRMBy(array: Chart[], by: string): Chart[] {
     return array.sort(
       (a: any, b: any) => 0 - (a[by].value > b[by].value ? -1 : 1)
     );
