@@ -489,7 +489,7 @@ export class ExpandChartComponent implements OnInit {
 
     let cumulativeProb: number = 1;
     let previousRM: any;
-    sortedRMs = this.homeService.sortBy(this.rms, this.eixosX[this.id]);
+    sortedRMs = this.homeService.sortRMBy(this.rms, this.eixosX[this.id]);
     lineX = this.eixosX[this.id];
 
     sortedRMs.map((rm: any, index: number) => {
