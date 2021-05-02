@@ -20,7 +20,7 @@ export class HomeComponent implements OnInit {
   private marginAll = 30;
 
   // private height: any;
-  height: any;
+  public height: any;
 
   private width: any;
 
@@ -741,33 +741,14 @@ export class HomeComponent implements OnInit {
 
     let attributes: any = [];
 
-    const teste = [
-      { name: 'E', value: 0.12702 },
-      { name: 'T', value: 0.09056 },
-      { name: 'A', value: 0.08167 },
-      { name: 'O', value: 0.07507 },
-      { name: 'I', value: 0.06966 },
-    ];
-
-    // console.log(Object.keys(tempData[0])[0]);
-    // console.log(tempData[0].multIP?.difference);
-    // console.log(Object.keys(tempData));
-
     tempData.map((d, i) => {
       attributes[i] = Object.keys(d)[0];
-      // console.log(Object.keys(d));
     });
-
-    // tempData.map((d: any, i) => {
-    //   console.log(d[attributes[i]].difference);
-    // });
-    // console.log(attributes);
 
     // Create the X-axis band scale
     const x = d3.scaleLinear().domain([0, 1]).range([0, 45]);
 
     const barChart = d3
-      // .select(`#tileBarChart figure div div`)
       .select(`#barChart`)
       .selectAll('div')
       .data(tempData)
@@ -777,30 +758,12 @@ export class HomeComponent implements OnInit {
       .attr('class', 'barChart');
 
     barChart
-      // .select('#col1')
-      // .selectAll('p')
-      // .data(tempData)
-      // .join('p')
+      .append('div')
+      .style('width', '45px')
       .append('p')
       .style('margin-right', '5px')
-      // .style('margin-left', 'auto')
-      // .text((d) => Object.keys(d)[0].toUpperCase())
       .text((d, i) => attributes[i].toUpperCase());
 
-    // tempData.map((d: any, i) => {
-    //   d3.select('#col2')
-    //     .append(`div`)
-    //     .selectAll('svg')
-    //     .data(d[attributes[i]].difference)
-    //     .join('svg')
-    //     .attr('height', barHeight)
-    //     .attr('width', '45px')
-    //     .style('border', '1px solid black')
-    //     .style('margin-left', '5px')
-    //     .style('margin-bottom', '3px')
-    //     .append('g')
-    //     .attr('fill', 'steelblue');
-    // });
     tempData.map((d: any, i) => {
       d3.select(`#attribute${i}`)
         .append('div')
@@ -808,66 +771,30 @@ export class HomeComponent implements OnInit {
         .data(d[attributes[i]].difference)
         .join('svg')
         .attr('height', barHeight)
-        .attr('width', '45px')
-        .style('border', '1px solid black')
+        .attr('width', '40px')
+        .style('border', 'solid medium gray')
         .style('margin-left', '7px')
-        // .style('margin-left', 'auto')
         .append('g')
-        .attr('fill', 'steelblue')
+        .attr('fill', 'darkblue')
         .append('rect')
         .attr('x', x(0))
-        // .attr("y", (d: any, i: any) => y(i))
         .attr('width', (d: any) => x(d) - x(0))
-        // .attr('height', y.bandwidth());
         .attr('height', barHeight);
     });
+  }
+  public openBarChartNewWindow() {
+    console.log('NEW WINDOW');
 
-    // .append('svg')
-    // .attr('height', barHeight);
+    let url: string;
 
-    // const tempDataLength = tempData.length;
+    url = this.router.serializeUrl(
+      this.router.createUrlTree([`/expandBarChart`])
+    );
 
-    // Create the Y-axis band scale
-    const y = d3.scaleBand();
-    // .domain(d3.range(tempData.length))
-    // .domain(tempData.map((d) => d.name))
-    // .range([0, 100])
-    // .padding(0.1);
+    let features =
+      'width=1370, height=550,menubar=yes,location=no,resizable=no,scrollbars=no,status=no';
 
-    // .append('g');
-
-    // barChart
-    //   .append('svg')
-    //   .attr('height', barHeight)
-    //   .attr('width', '45px')
-    //   .style('border', '1px solid black')
-    //   .style('margin-left', 'auto')
-    //   .append('g')
-    //   .attr('fill', 'steelblue')
-    //   .selectAll('rect')
-    //   .data(teste)
-    //   .join('rect')
-    //   .attr('x', x(0))
-    //   // .attr("y", (d: any, i: any) => y(i))
-    //   .attr('width', (d) => x(d.value) - x(0))
-    //   // .attr('height', y.bandwidth());
-    //   .attr('height', barHeight);
-
-    // Draw the X-axis on the DOM
-    // barChart
-    //   .append('g')
-    //   // .append('g')
-    //   // .attr("transform", "translate(0," + this.height + ")")
-    //   .call(d3.axisBottom(x));
-
-    // .selectAll("text")
-    // .attr("transform", "translate(-10,0)rotate(-45)")
-    // .style("text-anchor", "end");
-
-    // Draw the Y-axis on the DOM
-    // barChart
-    //   .append('g')
-    //   .attr('transform', `translate(25,0)`)
-    //   .call(d3.axisLeft(y));
+    window.open(url, '_blank', features);
+    return false;
   }
 }

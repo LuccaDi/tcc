@@ -1,0 +1,150 @@
+<figure id="expandBarChart">
+  <mat-grid-list cols="9">
+
+    <mat-grid-tile id="tileAttribute" colspan='1' style="border: 1px solid black;">
+      <div style="width: 100%; height: 100%;">
+        <mat-card style="padding: 0px; width: 100%; height: 100%;">
+          <mat-card-header
+            style="border-bottom: 1px solid black; display: flex; justify-content: center; background-color: #DCDCDC;">
+            <mat-card-title>
+              Attribute
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div id="containerAttr">
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+    </mat-grid-tile>
+
+    <mat-grid-tile id="tileOriginal" colspan='2' style="border: 1px solid black;">
+      <div style="width: 100%; height: 100%;">
+        <mat-card style="padding: 0px; width: 100%; height: 100%;">
+          <mat-card-header
+            style="border-bottom: 1px solid black; display: flex; justify-content: center; background-color: #DCDCDC;">
+            <mat-card-title>
+              Original
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div id="containerOriginal">
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+    </mat-grid-tile>
+
+    <mat-grid-tile id="tileRMFinder" colspan='3' style="border: 1px solid black;">
+      <div style="width: 100%; height: 100%;">
+        <mat-card text-align="center" style="padding: 0px; width: 100%; height: 100%;">
+          <mat-card-header
+            style="border-bottom: 1px solid black; display: flex; justify-content: center; background-color: #DCDCDC;">
+            <mat-card-title>
+              RMFinder
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div id="containerRMFinder">
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+    </mat-grid-tile>
+
+    <mat-grid-tile id="tileDifference" colspan='2' style="border: 1px solid black;">
+      <div style="width: 100%; height: 100%;">
+        <mat-card style="padding: 0px; width: 100%; height: 100%; ">
+          <mat-card-header
+            style="border-bottom: 1px solid black; display: flex; justify-content: center; background-color: #DCDCDC;">
+            <mat-card-title>
+              Difference
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div id="containerDifference">
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+    </mat-grid-tile>
+
+    <mat-grid-tile id="tileSum" colspan='1' style="border: 1px solid black;">
+      <div style="width: 100%; height: 100%;">
+        <mat-card style="padding: 0px; width: 100%; height: 100%; ">
+          <mat-card-header
+            style="border-bottom: 1px solid black; display: flex; justify-content: center; background-color: #DCDCDC;">
+            <mat-card-title>
+              Sum²
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div id="containerSum">
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+    </mat-grid-tile>
+
+    <mat-grid-tile colspan='3' style="border: 1px solid black;">
+      <div style="width: 100%; display: flex; justify-content: space-around;">
+        <svg width="45px" height="20px" style="border: solid medium red;">
+        </svg>
+        <p>
+          Level not covered (freq = 0) in the reduced set
+        </p>
+      </div>
+    </mat-grid-tile>
+
+    <mat-grid-tile colspan='3' style="border: 1px solid black;">
+      <p>Pen: {{pen}}</p>
+    </mat-grid-tile>
+
+    <mat-grid-tile colspan='3' style="border: 1px solid black;">
+      <p>Total sum: {{totalSum}}</p>
+    </mat-grid-tile>
+
+    <mat-grid-tile colspan='3' style="border: 1px solid black; ">
+
+      <div>
+        <mat-card class="mat-elevation-z0" style="padding: 0px; ">
+          <mat-card-content>
+            <div id="barChartOriginal" style="display: flex; flex-direction: column;">
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+    </mat-grid-tile>
+
+    <mat-grid-tile colspan='3' style="border: 1px solid black;">
+
+      <div>
+        <mat-card class="mat-elevation-z0" style="padding: 0px;">
+          <mat-card-content>
+            <div id="barChartRMFinder" style="display: flex; flex-direction: column;">
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+    </mat-grid-tile>
+
+    <mat-grid-tile colspan='3' style="border: 1px solid black; ">
+      <div>
+        <mat-card class="mat-elevation-z0" style="height: 100%; width: 100%; padding: 0px; ">
+          <mat-card-content>
+            <div id="barChartDifference" style="display: flex; flex-direction: column;">
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-grid-tile>
+
+  </mat-grid-list>
+</figure>
