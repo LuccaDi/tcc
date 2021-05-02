@@ -13,6 +13,7 @@ import { HomeService } from '../../services/home.service';
 export class HomeComponent implements OnInit {
   private data: Chart[] = [];
   private rms: Chart[] = [];
+  private attributes: string[] = [];
   private svg: any;
   private charts: any;
   private rects: any;
@@ -484,12 +485,8 @@ export class HomeComponent implements OnInit {
           .size(50)
       )
       .attr('transform', (d: any, i: any) => {
-        // console.log(d);
-
         if (i == 0) {
-          // console.log('i: ' + i);
           chart++;
-          // console.log('chart: ' + chart);
         }
         if (chart < 6) {
           return (
@@ -530,6 +527,7 @@ export class HomeComponent implements OnInit {
           if (data.id == dotId) {
             this.charts.selectAll('g').selectAll('.brushing').remove();
 
+            //vertical lines
             this.charts
               .selectAll('g')
               .append('line')
@@ -568,6 +566,7 @@ export class HomeComponent implements OnInit {
                 return this.y[chart](this.newYScale[chart++].domain()[1]);
               }); // y position of the second end of the line
 
+            //horizontal lines
             this.charts
               .selectAll('g')
               .append('line')
@@ -617,6 +616,18 @@ export class HomeComponent implements OnInit {
                   return this.y[chart++](data[lineY].cprob);
                 }
               }); // y position of the second end of the line
+
+            //bar chart brushing
+            this.attributes.map((tempD, index) => {
+              d3.select(`#attribute${index}`)
+                .selectAll('svg')
+                .style('background-color', '')
+                .style('border', 'solid medium grey');
+
+              d3.select(`#${tempD + data[tempD]}`)
+                .style('background-color', 'lightblue')
+                .style('border', 'solid medium green');
+            });
           }
         });
       });
@@ -739,10 +750,8 @@ export class HomeComponent implements OnInit {
       },
     ];
 
-    let attributes: any = [];
-
     tempData.map((d, i) => {
-      attributes[i] = Object.keys(d)[0];
+      this.attributes[i] = Object.keys(d)[0];
     });
 
     // Create the X-axis band scale
@@ -762,17 +771,18 @@ export class HomeComponent implements OnInit {
       .style('width', '45px')
       .append('p')
       .style('margin-right', '5px')
-      .text((d, i) => attributes[i].toUpperCase());
+      .text((d, i) => this.attributes[i].toUpperCase());
 
-    tempData.map((d: any, i) => {
-      d3.select(`#attribute${i}`)
+    tempData.map((data: any, index) => {
+      d3.select(`#attribute${index}`)
         .append('div')
         .selectAll('svg')
-        .data(d[attributes[i]].difference)
+        .data(data[this.attributes[index]].difference)
         .join('svg')
+        .attr('id', (d, i) => this.attributes[index] + i)
         .attr('height', barHeight)
         .attr('width', '40px')
-        .style('border', 'solid medium gray')
+        .style('border', 'solid medium grey')
         .style('margin-left', '7px')
         .append('g')
         .attr('fill', 'darkblue')
@@ -783,8 +793,6 @@ export class HomeComponent implements OnInit {
     });
   }
   public openBarChartNewWindow() {
-    console.log('NEW WINDOW');
-
     let url: string;
 
     url = this.router.serializeUrl(
