@@ -12,6 +12,7 @@ import { MatCardModule } from '@angular/material/card';
 import { HeaderComponent } from './components/template/header/header.component';
 import { HomeComponent } from './components/template/home/home.component';
 import { ExpandChartComponent } from './components/template/expand-chart/expand-chart.component';
+import { ExpandBarChartComponent } from './components/template/expand-bar-chart/expand-bar-chart.component';
 
 @NgModule({
   declarations: [
@@ -19,6 +20,7 @@ import { ExpandChartComponent } from './components/template/expand-chart/expand-
     HeaderComponent,
     HomeComponent,
     ExpandChartComponent,
+    ExpandBarChartComponent,
   ],
   imports: [
     BrowserModule,

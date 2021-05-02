@@ -741,14 +741,6 @@ export class HomeComponent implements OnInit {
 
     let attributes: any = [];
 
-    const teste = [
-      { name: 'E', value: 0.12702 },
-      { name: 'T', value: 0.09056 },
-      { name: 'A', value: 0.08167 },
-      { name: 'O', value: 0.07507 },
-      { name: 'I', value: 0.06966 },
-    ];
-
     tempData.map((d, i) => {
       attributes[i] = Object.keys(d)[0];
     });
@@ -766,7 +758,8 @@ export class HomeComponent implements OnInit {
       .attr('class', 'barChart');
 
     barChart
-
+      .append('div')
+      .style('width', '45px')
       .append('p')
       .style('margin-right', '5px')
       .text((d, i) => attributes[i].toUpperCase());
@@ -778,11 +771,11 @@ export class HomeComponent implements OnInit {
         .data(d[attributes[i]].difference)
         .join('svg')
         .attr('height', barHeight)
-        .attr('width', '45px')
-        .style('border', '1px solid black')
+        .attr('width', '40px')
+        .style('border', 'solid medium gray')
         .style('margin-left', '7px')
         .append('g')
-        .attr('fill', 'steelblue')
+        .attr('fill', 'darkblue')
         .append('rect')
         .attr('x', x(0))
         .attr('width', (d: any) => x(d) - x(0))
@@ -795,11 +788,11 @@ export class HomeComponent implements OnInit {
     let url: string;
 
     url = this.router.serializeUrl(
-      this.router.createUrlTree([`/expandChart/barChart`])
+      this.router.createUrlTree([`/expandBarChart`])
     );
 
     let features =
-      'width=900, height=650,menubar=yes,location=no,resizable=no,scrollbars=no,status=no';
+      'width=1370, height=550,menubar=yes,location=no,resizable=no,scrollbars=no,status=no';
 
     window.open(url, '_blank', features);
     return false;
