@@ -1,6 +1,9 @@
 import { style } from '@angular/animations';
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import * as d3 from 'd3';
+import { newChart } from '../../model/newChartModel.model';
+import { HomeService } from '../../services/home.service';
 
 @Component({
   selector: 'app-expand-bar-chart',
@@ -8,56 +11,47 @@ import * as d3 from 'd3';
   styleUrls: ['./expand-bar-chart.component.css'],
 })
 export class ExpandBarChartComponent implements OnInit {
-  private tempData = [
-    {
-      multIP: {
-        original: [0.14, 0.09, 0.17, 0.15, 0.21, 0.1, 0.15],
-        rmFinder: [0.0, 0.0, 0.99, 0.0, 0.01, 0.0, 0.0],
-        difference: [0.14, 0.09, 0.82, 0.15, 0.2, 0.1, 0.15],
-        sum: 1.64,
-      },
-    },
-    {
-      pvt: {
-        original: [0.31, 0.35, 0.35],
-        rmFinder: [0.01, 0.0, 0.99],
-        difference: [0.3, 0.35, 0.64],
-        sum: 1.29,
-      },
-    },
-    {
-      geo: {
-        original: [0.37, 0.34, 0.3],
-        rmFinder: [0.99, 0.0, 0.01],
-        difference: [0.62, 0.34, 0.29],
-        sum: 1.25,
-      },
-    },
-  ];
+  private data = <newChart>{};
+  private solutions: newChart[] = [];
+  private solution: any;
+  private barChart: any;
+  private barChartAttributes: any;
 
-  constructor() {}
+  private attributesKeys: string[] = [];
 
-  ngOnInit(): void {
+  public pen?: number;
+  public totalSum?: number;
+
+  constructor(
+    private homeService: HomeService,
+    private route: ActivatedRoute
+  ) {}
+
+  async ngOnInit(): Promise<void> {
+    this.solution = this.route.snapshot.params.solution;
+    this.solutions = await this.homeService.getData().toPromise();
+
+    this.barChart = this.solutions[0].barChart;
+
     this.showInfos();
     this.drawOriginalBarChart();
     this.drawRMFinderBarChart();
     this.drawDifferenceBarChart();
   }
 
-  public pen: number = 7;
-  public totalSum: number = 2.003;
-
   private showInfos() {
-    let attributes: any = [];
+    this.pen = this.barChart.pen;
+    this.totalSum = this.barChart.totalSum;
+    this.barChartAttributes = this.barChart.attributes;
 
-    this.tempData.map((d, i) => {
-      attributes[i] = Object.keys(d)[0];
-    });
+    this.attributesKeys = Object.keys(this.barChartAttributes);
+
+    console.log(this.barChartAttributes);
 
     //Add Attributes
     d3.select('#containerAttr')
       .selectAll('p')
-      .data(attributes)
+      .data(this.attributesKeys)
       .join('p')
       .style('border-bottom', '1px solid black')
       .attr('id', (d) => `attribute${d}`)
@@ -68,55 +62,50 @@ export class ExpandBarChartComponent implements OnInit {
     //Add Original values
     d3.select('#containerOriginal')
       .selectAll('p')
-      .data(this.tempData)
+      .data(this.attributesKeys)
       .join('p')
       .style('border-bottom', '1px solid black')
       .style('margin-bottom', '0px')
-      .attr('id', (d) => `original${Object.keys(d)[0]}`)
-      .text((d: any, i) => `(${d[attributes[i]].original})`)
+      .attr('id', (d) => `original${d}`)
+      .text((d: any) => `(${this.barChartAttributes[d].original})`)
       .on('click', (element, attr) => this.clickAttr(attr));
 
     //Add RMFinder values
     d3.select('#containerRMFinder')
       .selectAll('p')
-      .data(this.tempData)
+      .data(this.attributesKeys)
       .join('p')
       .style('border-bottom', '1px solid black')
       .style('margin-bottom', '0px')
-      .attr('id', (d) => `rmFinder${Object.keys(d)[0]}`)
-      .text((d: any, i) => `(${d[attributes[i]].rmFinder})`)
+      .attr('id', (d) => `rmFinder${d}`)
+      .text((d: any) => `(${this.barChartAttributes[d].rmFinder})`)
       .on('click', (element, attr) => this.clickAttr(attr));
 
     //Add Difference values
     d3.select('#containerDifference')
       .selectAll('p')
-      .data(this.tempData)
+      .data(this.attributesKeys)
       .join('p')
       .style('border-bottom', '1px solid black')
       .style('margin-bottom', '0px')
-      .attr('id', (d) => `difference${Object.keys(d)[0]}`)
-      .text((d: any, i) => `(${d[attributes[i]].difference})`)
+      .attr('id', (d) => `difference${d}`)
+      .text((d: any) => `(${this.barChartAttributes[d].difference})`)
       .on('click', (element, attr) => this.clickAttr(attr));
 
     //Add Sum values
     d3.select('#containerSum')
       .selectAll('p')
-      .data(this.tempData)
+      .data(this.attributesKeys)
       .join('p')
       .style('border-bottom', '1px solid black')
       .style('margin-bottom', '0px')
-      .attr('id', (d) => `sum${Object.keys(d)[0]}`)
-      .text((d: any, i) => d[attributes[i]].sum)
+      .attr('id', (d) => `sum${d}`)
+      .text((d: any) => this.barChartAttributes[d].sum)
       .on('click', (element, attr) => this.clickAttr(attr));
   }
 
   private drawOriginalBarChart() {
-    let attributes: any = [];
     const barHeight: string = '20px';
-
-    this.tempData.map((d, i) => {
-      attributes[i] = Object.keys(d)[0];
-    });
 
     // Create the X-axis band scale
     const x = d3.scaleLinear().domain([0, 1]).range([0, 45]);
@@ -124,7 +113,7 @@ export class ExpandBarChartComponent implements OnInit {
     const barChart = d3
       .select(`#barChartOriginal`)
       .selectAll('div')
-      .data(this.tempData)
+      .data(this.attributesKeys)
       .join('div')
       .attr('id', (d, i) => `attributeOriginal${i}`)
       .style('display', 'flex')
@@ -135,13 +124,13 @@ export class ExpandBarChartComponent implements OnInit {
       .style('width', '45px')
       .append('p')
       .style('margin-right', '5px')
-      .text((d, i) => attributes[i].toUpperCase());
+      .text((d, i) => this.attributesKeys[i].toUpperCase());
 
-    this.tempData.map((data: any, i) => {
+    this.attributesKeys.map((data: any, i) => {
       d3.select(`#attributeOriginal${i}`)
         .append('div')
         .selectAll('svg')
-        .data(data[attributes[i]].original)
+        .data(this.barChartAttributes[data].original)
         .join('svg')
         .attr('height', barHeight)
         .attr('width', '40px')
@@ -157,12 +146,7 @@ export class ExpandBarChartComponent implements OnInit {
   }
 
   private drawRMFinderBarChart() {
-    let attributes: any = [];
     const barHeight: string = '20px';
-
-    this.tempData.map((d, i) => {
-      attributes[i] = Object.keys(d)[0];
-    });
 
     // Create the X-axis band scale
     const x = d3.scaleLinear().domain([0, 1]).range([0, 45]);
@@ -170,7 +154,7 @@ export class ExpandBarChartComponent implements OnInit {
     const barChart = d3
       .select(`#barChartRMFinder`)
       .selectAll('div')
-      .data(this.tempData)
+      .data(this.attributesKeys)
       .join('div')
       .attr('id', (d, i) => `attributeRMFinder${i}`)
       .style('display', 'flex')
@@ -181,13 +165,13 @@ export class ExpandBarChartComponent implements OnInit {
       .style('width', '45px')
       .append('p')
       .style('margin-right', '5px')
-      .text((d, i) => attributes[i].toUpperCase());
+      .text((d, i) => this.attributesKeys[i].toUpperCase());
 
-    this.tempData.map((d: any, i) => {
+    this.attributesKeys.map((d: any, i) => {
       d3.select(`#attributeRMFinder${i}`)
         .append('div')
         .selectAll('svg')
-        .data(d[attributes[i]].rmFinder)
+        .data(this.barChartAttributes[d].rmFinder)
         .join('svg')
         .attr('height', barHeight)
         .attr('width', '40px')
@@ -203,12 +187,7 @@ export class ExpandBarChartComponent implements OnInit {
   }
 
   private drawDifferenceBarChart() {
-    let attributes: any = [];
     const barHeight: string = '20px';
-
-    this.tempData.map((d, i) => {
-      attributes[i] = Object.keys(d)[0];
-    });
 
     // Create the X-axis band scale
     const x = d3.scaleLinear().domain([0, 1]).range([0, 45]);
@@ -216,7 +195,7 @@ export class ExpandBarChartComponent implements OnInit {
     const barChart = d3
       .select(`#barChartDifference`)
       .selectAll('div')
-      .data(this.tempData)
+      .data(this.attributesKeys)
       .join('div')
       .attr('id', (d, i) => `attributeDifference${i}`)
       .style('display', 'flex')
@@ -227,13 +206,13 @@ export class ExpandBarChartComponent implements OnInit {
       .style('width', '45px')
       .append('p')
       .style('margin-right', '5px')
-      .text((d, i) => attributes[i].toUpperCase());
+      .text((d, i) => this.attributesKeys[i].toUpperCase());
 
-    this.tempData.map((d: any, i) => {
+    this.attributesKeys.map((d: any, i) => {
       d3.select(`#attributeDifference${i}`)
         .append('div')
         .selectAll('svg')
-        .data(d[attributes[i]].difference)
+        .data(this.barChartAttributes[d].difference)
         .join('svg')
         .attr('height', barHeight)
         .attr('width', '40px')
@@ -270,8 +249,8 @@ export class ExpandBarChartComponent implements OnInit {
     d3.select(`#difference${attr}`).style('background-color', 'lightblue');
     d3.select(`#sum${attr}`).style('background-color', 'lightblue');
 
-    this.tempData.map((data, i) => {
-      if (Object.keys(data)[0] == attr) {
+    this.attributesKeys.map((data, i) => {
+      if (data == attr) {
         d3.select(`#attributeOriginal${i}`).style(
           'background-color',
           'lightblue'

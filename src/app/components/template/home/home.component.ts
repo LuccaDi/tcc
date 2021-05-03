@@ -12,6 +12,7 @@ import { HomeService } from '../../services/home.service';
   styleUrls: ['./home.component.css'],
 })
 export class HomeComponent implements OnInit {
+  private selectedSolution = 0;
   private testeData = <newChart>{};
   private solutions: newChart[] = [];
   private data: newChart[] = [];
@@ -88,7 +89,7 @@ export class HomeComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.solutions = await this.homeService.getData().toPromise();
-    this.testeData = this.solutions[0];
+    this.testeData = this.solutions[this.selectedSolution];
 
     this.data = await this.homeService.getData().toPromise();
     this.rms = this.homeService.getRMs(this.testeData);
@@ -777,7 +778,7 @@ export class HomeComponent implements OnInit {
     let url: string;
 
     url = this.router.serializeUrl(
-      this.router.createUrlTree([`/expandBarChart`])
+      this.router.createUrlTree([`/expandBarChart/${this.selectedSolution}`])
     );
 
     let features =
