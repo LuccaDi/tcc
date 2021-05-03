@@ -23,7 +23,7 @@ export class HomeService {
   getRMs(solution: Solution) {
     let rms: Object[];
 
-    rms = solution.models.filter((d) => d.rm == true);
+    rms = solution.models.filter((d: any) => d.rm == true);
 
     return rms;
   }
