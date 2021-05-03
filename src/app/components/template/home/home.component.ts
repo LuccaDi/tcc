@@ -232,10 +232,6 @@ export class HomeComponent implements OnInit {
         if (chart >= this.numCharts) {
           return;
         } else if (chart < 6) {
-          // domain = this.data.map((d: any) => {
-          //   return d[this.eixosY[chart]].value;
-          // });
-
           domain = this.testeData.models.map((d: any) => {
             return d.variables[this.eixosY[chart]].value;
           });
