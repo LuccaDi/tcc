@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterStateSnapshot } from '@angular/router';
 import * as d3 from 'd3';
-import { Chart } from '../../model/chart.model';
+import { Solution } from '../../model/solution.model';
 import { HomeService } from '../../services/home.service';
 
 @Component({
@@ -10,8 +10,15 @@ import { HomeService } from '../../services/home.service';
   styleUrls: ['./expand-chart.component.css'],
 })
 export class ExpandChartComponent implements OnInit {
-  private data: Chart[] = [];
-  private rms: Chart[] = [];
+  // private data: Chart[] = [];
+  // private rms: Chart[] = [];
+  private rms: any;
+  private testeData = <Solution>{};
+  private solutions: Solution[] = [];
+
+  private data: Solution[] = [];
+  // private rms: newChart[] = [];
+
   private id: any;
 
   private marginAll = 30;
@@ -75,8 +82,13 @@ export class ExpandChartComponent implements OnInit {
     this.onResize();
     this.id = this.route.snapshot.params.id;
 
+    this.solutions = await this.homeService.getData().toPromise();
+    this.testeData = this.solutions[0];
+
     this.data = await this.homeService.getData().toPromise();
-    this.rms = await this.homeService.getRMs();
+    // this.rms = await this.homeService.getRMs();
+
+    this.rms = this.homeService.getRMs(this.testeData);
 
     this.drawPlot();
     this.addDots();
@@ -122,8 +134,8 @@ export class ExpandChartComponent implements OnInit {
     let domain;
     let extentDomain: any;
 
-    domain = this.data.map((d: any) => {
-      return d[this.eixosX[chart]].value;
+    domain = this.testeData.models.map((d: any) => {
+      return d.variables[this.eixosX[chart]].value;
     });
 
     extentDomain = d3.extent(domain);
@@ -157,8 +169,8 @@ export class ExpandChartComponent implements OnInit {
     let extentDomain: any;
 
     if (chart < 6) {
-      domain = this.data.map((d: any) => {
-        return d[this.eixosY[chart]].value;
+      domain = this.testeData.models.map((d: any) => {
+        return d.variables[this.eixosY[chart]].value;
       });
       extentDomain = d3.extent(domain);
     } else {
@@ -224,7 +236,7 @@ export class ExpandChartComponent implements OnInit {
       .attr('id', () => 'chart')
       .attr('clip-path', () => `url(#clip)`)
       .selectAll('path')
-      .data(this.data)
+      .data(this.testeData.models)
       .join('path')
       .attr('id', (d: any) => d.id)
       .attr('class', 'dot')
@@ -246,17 +258,17 @@ export class ExpandChartComponent implements OnInit {
         if (this.id < 6) {
           return (
             'translate(' +
-            this.x(d[this.eixosX[this.id]].value) +
+            this.x(d.variables[this.eixosX[this.id]].value) +
             ',' +
-            this.y(d[this.eixosY[this.id]].value) +
+            this.y(d.variables[this.eixosY[this.id]].value) +
             ')'
           );
         } else {
           return (
             'translate(' +
-            this.x(d[this.eixosX[this.id]].value) +
+            this.x(d.variables[this.eixosX[this.id]].value) +
             ',' +
-            this.y(d[this.eixosX[this.id]].cprob) +
+            this.y(d.variables[this.eixosX[this.id]].cprob) +
             ')'
           );
         }
@@ -278,7 +290,7 @@ export class ExpandChartComponent implements OnInit {
 
         let dotId = d.srcElement.attributes.id.value;
 
-        this.data.map((data: any) => {
+        this.testeData.models.map((data: any) => {
           if (data.id == dotId) {
             d3.select('#chart').selectAll('.brushing').remove();
 
@@ -293,7 +305,7 @@ export class ExpandChartComponent implements OnInit {
               .attr('x1', () => {
                 lineX = this.eixosX[this.id];
 
-                return this.x(data[lineX].value);
+                return this.x(data.variables[lineX].value);
               }) // x position of the first end of the line
               .attr('y1', () => {
                 return this.y(this.newYScale.domain()[0]);
@@ -301,7 +313,7 @@ export class ExpandChartComponent implements OnInit {
               .attr('x2', () => {
                 lineX = this.eixosX[this.id];
 
-                return this.x(data[lineX].value);
+                return this.x(data.variables[lineX].value);
               }) // x position of the second end of the line
               .attr('y2', () => {
                 return this.y(this.newYScale.domain()[1]);
@@ -321,10 +333,10 @@ export class ExpandChartComponent implements OnInit {
               .attr('y1', () => {
                 if (this.id < 6) {
                   lineY = this.eixosY[this.id];
-                  return this.y(data[lineY].value);
+                  return this.y(data.variables[lineY].value);
                 } else {
                   lineY = this.eixosX[this.id];
-                  return this.y(data[lineY].cprob);
+                  return this.y(data.variables[lineY].cprob);
                 }
               }) // y position of the first end of the line
               .attr('x2', () => {
@@ -333,10 +345,10 @@ export class ExpandChartComponent implements OnInit {
               .attr('y2', () => {
                 if (this.id < 6) {
                   lineY = this.eixosY[this.id];
-                  return this.y(data[lineY].value);
+                  return this.y(data.variables[lineY].value);
                 } else {
                   lineY = this.eixosX[this.id];
-                  return this.y(data[lineY].cprob);
+                  return this.y(data.variables[lineY].cprob);
                 }
               }); // y position of the second end of the line
 
@@ -405,35 +417,37 @@ export class ExpandChartComponent implements OnInit {
     this.colorChart();
   };
 
-  private displayInfo(data: Chart) {
-    let keys = Object.keys(data).filter((d) => {
-      return d != 'predefined' && d != 'rm';
+  private displayInfo(data: any) {
+    let info;
+    let info2;
+
+    let entries = Object.entries(data).filter((d) => {
+      return (
+        typeof d[1] != 'object' &&
+        d[0] != 'predefined' &&
+        d[0] != 'rm' &&
+        d[1] != null
+      );
     });
 
-    let values = Object.values(data).filter((d) => {
-      return typeof d != 'boolean';
+    Object.entries(data.attributes).forEach((d) => {
+      entries.push(d);
     });
 
-    let info: any = [];
-    let info2: any = [];
-
-    keys.map((k, i) => {
-      if (i < keys.length / 2) {
-        if (typeof values[i] == 'object') {
-          info[i] = `${k} = ${values[i].value}, C.Prob = ${values[i].cprob}`;
-        } else {
-          info[i] = `${k} = ${values[i]}`;
-        }
-      } else {
-        if (typeof values[i] == 'object') {
-          info2[
-            i - keys.length / 2
-          ] = `${k} = ${values[i].value}, C.Prob = ${values[i].cprob}`;
-        } else {
-          info2[i - keys.length / 2] = `${k} = ${values[i]}`;
-        }
-      }
+    Object.entries(data.variables).forEach((d) => {
+      entries.push(d);
     });
+
+    info = entries.filter((d, i) => {
+      return i < Math.round(entries.length / 2);
+    });
+
+    info2 = entries.filter((d, i) => {
+      return i >= Math.round(entries.length / 2);
+    });
+
+    console.log(info);
+    console.log(info2);
 
     d3.select('#dotsInfo').selectAll('div').remove();
 
@@ -444,7 +458,11 @@ export class ExpandChartComponent implements OnInit {
       .selectAll('p')
       .data(info)
       .join('p')
-      .text((d) => `${d}`);
+      .text((d: any) => {
+        return typeof d[1] == 'object'
+          ? `${d[0]} =  ${d[1].value}, C.Prob = ${d[1].cprob}`
+          : `${d[0]} =  ${d[1]}`;
+      });
 
     d3.select('#dotsInfo')
       .append('div')
@@ -452,7 +470,11 @@ export class ExpandChartComponent implements OnInit {
       .selectAll('p')
       .data(info2)
       .join('p')
-      .text((d) => `${d}`);
+      .text((d: any) => {
+        return typeof d[1] == 'object'
+          ? `${d[0]} =  ${d[1].value}, C.Prob = ${d[1].cprob}`
+          : `${d[0]} =  ${d[1]}`;
+      });
   }
 
   private colorChart() {
@@ -484,7 +506,8 @@ export class ExpandChartComponent implements OnInit {
   }
 
   private drawRiskCurveLines() {
-    let sortedRMs: Chart[];
+    // let sortedRMs: Chart[];
+    let sortedRMs: Object[];
     let lineX: any;
 
     let cumulativeProb: number = 1;
@@ -501,13 +524,13 @@ export class ExpandChartComponent implements OnInit {
         .style('stroke-linejoin', 'round')
         .style('stroke-linecap', 'round')
         .attr('x1', () => {
-          return this.x(rm[lineX].value);
+          return this.x(rm.variables[lineX].value);
         }) // x position of the first end of the line
         .attr('y1', () => {
           return this.y(cumulativeProb);
         }) // y position of the first end of the line
         .attr('x2', () => {
-          return this.x(rm[lineX].value);
+          return this.x(rm.variables[lineX].value);
         }) // x position of the second end of the line
         .attr('y2', () => {
           cumulativeProb -= rm.cprobRM;
@@ -526,13 +549,13 @@ export class ExpandChartComponent implements OnInit {
         .style('stroke-linejoin', 'round')
         .style('stroke-linecap', 'round')
         .attr('x1', () => {
-          return this.x(previousRM[lineX].value);
+          return this.x(previousRM.variables[lineX].value);
         }) // x position of the first end of the line
         .attr('y1', () => {
           return this.y(cumulativeProb + rm.cprobRM);
         }) // y position of the first end of the line
         .attr('x2', () => {
-          return this.x(rm[lineX].value);
+          return this.x(rm.variables[lineX].value);
         }) // x position of the second end of the line
         .attr('y2', () => {
           return this.y(cumulativeProb + rm.cprobRM);

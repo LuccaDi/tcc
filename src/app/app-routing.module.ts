@@ -14,7 +14,7 @@ const routes: Routes = [
     component: ExpandChartComponent,
   },
   {
-    path: 'expandBarChart',
+    path: 'expandBarChart/:solution',
     component: ExpandBarChartComponent,
   },
 ];

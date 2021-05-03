@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import * as d3 from 'd3';
 import { line } from 'd3';
-import { Chart } from '../../model/chart.model';
+import { Solution } from '../../model/solution.model';
 import { HomeService } from '../../services/home.service';
 
 @Component({
@@ -11,9 +11,13 @@ import { HomeService } from '../../services/home.service';
   styleUrls: ['./home.component.css'],
 })
 export class HomeComponent implements OnInit {
-  private data: Chart[] = [];
-  private rms: Chart[] = [];
-  private attributes: string[] = [];
+  private selectedSolution = 0;
+  private testeData = <Solution>{};
+  private solutions: Solution[] = [];
+  private data: Solution[] = [];
+  private rms: any;
+  private attributesKeys: string[] = [];
+  private barChartAttributes: any;
   private svg: any;
   private charts: any;
   private rects: any;
@@ -83,8 +87,11 @@ export class HomeComponent implements OnInit {
   constructor(private homeService: HomeService, private router: Router) {}
 
   async ngOnInit(): Promise<void> {
+    this.solutions = await this.homeService.getData().toPromise();
+    this.testeData = this.solutions[this.selectedSolution];
+
     this.data = await this.homeService.getData().toPromise();
-    this.rms = await this.homeService.getRMs();
+    this.rms = this.homeService.getRMs(this.testeData);
 
     this.drawPlot();
     this.addDots();
@@ -168,8 +175,8 @@ export class HomeComponent implements OnInit {
           return;
         }
 
-        domain = this.data.map((d: any) => {
-          return d[this.eixosX[chart]].value;
+        domain = this.testeData.models.map((d: any) => {
+          return d.variables[this.eixosX[chart]].value;
         });
 
         extentDomain = d3.extent(domain);
@@ -225,8 +232,8 @@ export class HomeComponent implements OnInit {
         if (chart >= this.numCharts) {
           return;
         } else if (chart < 6) {
-          domain = this.data.map((d: any) => {
-            return d[this.eixosY[chart]].value;
+          domain = this.testeData.models.map((d: any) => {
+            return d.variables[this.eixosY[chart]].value;
           });
 
           extentDomain = d3.extent(domain);
@@ -466,7 +473,7 @@ export class HomeComponent implements OnInit {
       .attr('id', () => 'chart' + g++)
       .attr('clip-path', () => `url(#clip${c++})`)
       .selectAll('path')
-      .data(this.data)
+      .data(this.testeData.models)
       .join('path')
       .attr('id', (d: any) => d.id)
       .attr('class', 'dot')
@@ -491,17 +498,17 @@ export class HomeComponent implements OnInit {
         if (chart < 6) {
           return (
             'translate(' +
-            this.x[chart](d[this.eixosX[chart]].value) +
+            this.x[chart](d.variables[this.eixosX[chart]].value) +
             ',' +
-            this.y[chart](d[this.eixosY[chart]].value) +
+            this.y[chart](d.variables[this.eixosY[chart]].value) +
             ')'
           );
         } else {
           return (
             'translate(' +
-            this.x[chart](d[this.eixosX[chart]].value) +
+            this.x[chart](d.variables[this.eixosX[chart]].value) +
             ',' +
-            this.y[chart](d[this.eixosX[chart]].cprob) +
+            this.y[chart](d.variables[this.eixosX[chart]].cprob) +
             ')'
           );
         }
@@ -523,7 +530,7 @@ export class HomeComponent implements OnInit {
 
         let dotId = d.srcElement.attributes.id.value;
 
-        this.data.map((data: any) => {
+        this.testeData.models.map((data: any) => {
           if (data.id == dotId) {
             this.charts.selectAll('g').selectAll('.brushing').remove();
 
@@ -540,7 +547,7 @@ export class HomeComponent implements OnInit {
               .attr('x1', () => {
                 lineX = this.eixosX[chart];
 
-                return this.x[chart++](data[lineX].value);
+                return this.x[chart++](data.variables[lineX].value);
               }) // x position of the first end of the line
               .attr('y1', () => {
                 if (chart >= this.numCharts) {
@@ -556,7 +563,7 @@ export class HomeComponent implements OnInit {
 
                 lineX = this.eixosX[chart];
 
-                return this.x[chart++](data[lineX].value);
+                return this.x[chart++](data.variables[lineX].value);
               }) // x position of the second end of the line
               .attr('y2', () => {
                 if (chart >= this.numCharts) {
@@ -590,10 +597,10 @@ export class HomeComponent implements OnInit {
 
                 if (chart < 6) {
                   lineY = this.eixosY[chart];
-                  return this.y[chart++](data[lineY].value);
+                  return this.y[chart++](data.variables[lineY].value);
                 } else {
                   lineY = this.eixosX[chart];
-                  return this.y[chart++](data[lineY].cprob);
+                  return this.y[chart++](data.variables[lineY].cprob);
                 }
               }) // y position of the first end of the line
               .attr('x2', () => {
@@ -610,21 +617,21 @@ export class HomeComponent implements OnInit {
 
                 if (chart < 6) {
                   lineY = this.eixosY[chart];
-                  return this.y[chart++](data[lineY].value);
+                  return this.y[chart++](data.variables[lineY].value);
                 } else {
                   lineY = this.eixosX[chart];
-                  return this.y[chart++](data[lineY].cprob);
+                  return this.y[chart++](data.variables[lineY].cprob);
                 }
               }); // y position of the second end of the line
 
             //bar chart brushing
-            this.attributes.map((tempD, index) => {
+            this.attributesKeys.map((tempD, index) => {
               d3.select(`#attribute${index}`)
                 .selectAll('svg')
                 .style('background-color', '')
                 .style('border', 'solid medium grey');
 
-              d3.select(`#${tempD + data[tempD]}`)
+              d3.select(`#${tempD + data.attributes[tempD]}`)
                 .style('background-color', 'lightblue')
                 .style('border', 'solid medium green');
             });
@@ -663,7 +670,7 @@ export class HomeComponent implements OnInit {
 
   private drawRiskCurveLines() {
     let chart: number;
-    let sortedRMs: Chart[];
+    let sortedRMs: Object[];
     let lineX: any;
 
     for (chart = 6; chart < this.numCharts; chart++) {
@@ -681,13 +688,13 @@ export class HomeComponent implements OnInit {
           .style('stroke-linejoin', 'round')
           .style('stroke-linecap', 'round')
           .attr('x1', () => {
-            return this.x[chart](rm[lineX].value);
+            return this.x[chart](rm.variables[lineX].value);
           }) // x position of the first end of the line
           .attr('y1', () => {
             return this.y[chart](cumulativeProb);
           }) // y position of the first end of the line
           .attr('x2', () => {
-            return this.x[chart](rm[lineX].value);
+            return this.x[chart](rm.variables[lineX].value);
           }) // x position of the second end of the line
           .attr('y2', () => {
             cumulativeProb -= rm.cprobRM;
@@ -706,13 +713,13 @@ export class HomeComponent implements OnInit {
           .style('stroke-linejoin', 'round')
           .style('stroke-linecap', 'round')
           .attr('x1', () => {
-            return this.x[chart](previousRM[lineX].value);
+            return this.x[chart](previousRM.variables[lineX].value);
           }) // x position of the first end of the line
           .attr('y1', () => {
             return this.y[chart](cumulativeProb + rm.cprobRM);
           }) // y position of the first end of the line
           .attr('x2', () => {
-            return this.x[chart](rm[lineX].value);
+            return this.x[chart](rm.variables[lineX].value);
           }) // x position of the second end of the line
           .attr('y2', () => {
             return this.y[chart](cumulativeProb + rm.cprobRM);
@@ -723,36 +730,9 @@ export class HomeComponent implements OnInit {
 
   private drawBarChart() {
     const barHeight: string = '20px';
-    const tempData = [
-      {
-        multIP: {
-          original: [0.14, 0.09, 0.17, 0.15, 0.21, 0.1, 0.15],
-          rmFinder: [0.0, 0.0, 0.99, 0.0, 0.01, 0.0, 0.0],
-          difference: [0.14, 0.09, 0.82, 0.15, 0.2, 0.1, 0.15],
-          sum: 1.64,
-        },
-      },
-      {
-        pvt: {
-          original: [0.31, 0.35, 0.35],
-          rmFinder: [0.01, 0.0, 0.99],
-          difference: [0.3, 0.35, 0.64],
-          sum: 1.29,
-        },
-      },
-      {
-        geo: {
-          original: [0.37, 0.34, 0.3],
-          rmFinder: [0.99, 0.0, 0.01],
-          difference: [0.62, 0.34, 0.29],
-          sum: 1.25,
-        },
-      },
-    ];
+    this.barChartAttributes = this.testeData.barChart.attributes;
 
-    tempData.map((d, i) => {
-      this.attributes[i] = Object.keys(d)[0];
-    });
+    this.attributesKeys = Object.keys(this.barChartAttributes);
 
     // Create the X-axis band scale
     const x = d3.scaleLinear().domain([0, 1]).range([0, 45]);
@@ -760,7 +740,7 @@ export class HomeComponent implements OnInit {
     const barChart = d3
       .select(`#barChart`)
       .selectAll('div')
-      .data(tempData)
+      .data(this.attributesKeys)
       .join('div')
       .attr('id', (d, i) => `attribute${i}`)
       .style('display', 'flex')
@@ -771,15 +751,15 @@ export class HomeComponent implements OnInit {
       .style('width', '45px')
       .append('p')
       .style('margin-right', '5px')
-      .text((d, i) => this.attributes[i].toUpperCase());
+      .text((d, i) => this.attributesKeys[i].toUpperCase());
 
-    tempData.map((data: any, index) => {
+    this.attributesKeys.map((data: any, index) => {
       d3.select(`#attribute${index}`)
         .append('div')
         .selectAll('svg')
-        .data(data[this.attributes[index]].difference)
+        .data(this.barChartAttributes[data].difference)
         .join('svg')
-        .attr('id', (d, i) => this.attributes[index] + i)
+        .attr('id', (d, i) => data + i)
         .attr('height', barHeight)
         .attr('width', '40px')
         .style('border', 'solid medium grey')
@@ -792,11 +772,12 @@ export class HomeComponent implements OnInit {
         .attr('height', barHeight);
     });
   }
+
   public openBarChartNewWindow() {
     let url: string;
 
     url = this.router.serializeUrl(
-      this.router.createUrlTree([`/expandBarChart`])
+      this.router.createUrlTree([`/expandBarChart/${this.selectedSolution}`])
     );
 
     let features =
