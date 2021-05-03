@@ -2,8 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import * as d3 from 'd3';
 import { line } from 'd3';
-import { Chart } from '../../model/chart.model';
-import { newChart } from '../../model/newChartModel.model';
+import { Solution } from '../../model/solution.model';
 import { HomeService } from '../../services/home.service';
 
 @Component({
@@ -13,9 +12,9 @@ import { HomeService } from '../../services/home.service';
 })
 export class HomeComponent implements OnInit {
   private selectedSolution = 0;
-  private testeData = <newChart>{};
-  private solutions: newChart[] = [];
-  private data: newChart[] = [];
+  private testeData = <Solution>{};
+  private solutions: Solution[] = [];
+  private data: Solution[] = [];
   private rms: any;
   private attributesKeys: string[] = [];
   private barChartAttributes: any;

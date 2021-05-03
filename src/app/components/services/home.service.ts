@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/internal/Observable';
-import { Chart } from '../model/chart.model';
+import { Solution } from '../model/solution.model';
 
 @Injectable({
   providedIn: 'root',
@@ -12,25 +12,25 @@ export class HomeService {
   testeLinesRiskURL =
     'https://run.mocky.io/v3/6db2582c-6eee-4243-a13c-ab82b77c4e14';
 
+  testeNewJson = 'https://run.mocky.io/v3/67e9a971-49f2-4b34-ab1a-b33a7e097b6e';
+
   constructor(private http: HttpClient) {}
 
-  getData(): Observable<Chart[]> {
-    return this.http.get<Chart[]>(this.testeLinesRiskURL);
+  getData(): Observable<Solution[]> {
+    return this.http.get<Solution[]>(this.testeNewJson);
   }
 
-  async getRMs(): Promise<Chart[]> {
-    // let rms = await this.getData().toPromise();
+  getRMs(solution: Solution) {
+    let rms: Object[];
 
-    let rms = await this.http.get<Chart[]>(this.testeLinesRiskURL).toPromise();
-
-    rms = rms.filter((data) => data.rm == true);
+    rms = solution.models.filter((d) => d.rm == true);
 
     return rms;
   }
-
-  sortRMBy(array: Chart[], by: string): Chart[] {
+  sortRMBy(array: Object[], by: string): Object[] {
     return array.sort(
-      (a: any, b: any) => 0 - (a[by].value > b[by].value ? -1 : 1)
+      (a: any, b: any) =>
+        0 - (a.variables[by].value > b.variables[by].value ? -1 : 1)
     );
   }
 }

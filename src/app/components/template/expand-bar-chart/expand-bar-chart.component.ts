@@ -2,7 +2,7 @@ import { style } from '@angular/animations';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import * as d3 from 'd3';
-import { newChart } from '../../model/newChartModel.model';
+import { Solution } from '../../model/solution.model';
 import { HomeService } from '../../services/home.service';
 
 @Component({
@@ -11,8 +11,8 @@ import { HomeService } from '../../services/home.service';
   styleUrls: ['./expand-bar-chart.component.css'],
 })
 export class ExpandBarChartComponent implements OnInit {
-  private data = <newChart>{};
-  private solutions: newChart[] = [];
+  private data = <Solution>{};
+  private solutions: Solution[] = [];
   private solution: any;
   private barChart: any;
   private barChartAttributes: any;

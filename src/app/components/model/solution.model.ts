@@ -1,18 +1,49 @@
-export interface Chart {
-  predefined: boolean;
-  rm: boolean;
-  id: number;
-  cprobRM?: number;
-  multIP: number;
-  pvt: number;
-  geo: number;
-  variables: {
-    [key: string]: {
-      value: number;
-      cprob: number;
+export interface Solution {
+  fcrossUsed: string[];
+  barChart: {
+    pen: number;
+    totalSum: number;
+    attributes: {
+      [key: string]: {
+        original: number[];
+        rmFinder: number[];
+        difference: number[];
+        sum: number;
+      };
     };
   };
+  models: {
+    predefined: boolean;
+    rm: boolean;
+    id: number;
+    cprobRM?: number;
+    attributes: {
+      [key: string]: number;
+    };
+    variables: {
+      [key: string]: {
+        value: number;
+        cprob: number;
+      };
+    };
+  }[];
 }
+
+// export interface Chart {
+//   predefined: boolean;
+//   rm: boolean;
+//   id: number;
+//   cprobRM?: number;
+//   multIP: number;
+//   pvt: number;
+//   geo: number;
+//   variables: {
+//     [key: string]: {
+//       value: number;
+//       cprob: number;
+//     };
+//   };
+// }
 
 // export interface Chart {
 //   predefined: boolean;

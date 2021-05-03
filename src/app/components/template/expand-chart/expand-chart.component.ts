@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterStateSnapshot } from '@angular/router';
 import * as d3 from 'd3';
-import { Chart } from '../../model/chart.model';
-import { newChart } from '../../model/newChartModel.model';
+import { Solution } from '../../model/solution.model';
 import { HomeService } from '../../services/home.service';
 
 @Component({
@@ -14,10 +13,10 @@ export class ExpandChartComponent implements OnInit {
   // private data: Chart[] = [];
   // private rms: Chart[] = [];
   private rms: any;
-  private testeData = <newChart>{};
-  private solutions: newChart[] = [];
+  private testeData = <Solution>{};
+  private solutions: Solution[] = [];
 
-  private data: newChart[] = [];
+  private data: Solution[] = [];
   // private rms: newChart[] = [];
 
   private id: any;
