@@ -532,7 +532,7 @@ export class HomeComponent implements OnInit {
 
         this.testeData.models.map((data: any) => {
           if (data.id == dotId) {
-            this.charts.selectAll('g').selectAll('.brushing').remove();
+            this.clearSelection();
 
             //vertical lines
             this.charts
@@ -625,12 +625,7 @@ export class HomeComponent implements OnInit {
               }); // y position of the second end of the line
 
             //bar chart brushing
-            this.attributesKeys.map((tempD, index) => {
-              d3.select(`#attribute${index}`)
-                .selectAll('svg')
-                .style('background-color', '')
-                .style('border', 'solid medium grey');
-
+            this.attributesKeys.map((tempD) => {
               d3.select(`#${tempD + data.attributes[tempD]}`)
                 .style('background-color', 'lightblue')
                 .style('border', 'solid medium green');
@@ -785,5 +780,16 @@ export class HomeComponent implements OnInit {
 
     window.open(url, '_blank', features);
     return false;
+  }
+
+  public clearSelection() {
+    this.charts.selectAll('g').selectAll('.brushing').remove();
+
+    this.attributesKeys.map((tempD, index) => {
+      d3.select(`#attribute${index}`)
+        .selectAll('svg')
+        .style('background-color', '')
+        .style('border', 'solid medium grey');
+    });
   }
 }
