@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import * as d3 from 'd3';
-import { line } from 'd3';
 import { Solution } from '../../model/solution.model';
 import { HomeService } from '../../services/home.service';
 
@@ -18,11 +17,15 @@ export class HomeComponent implements OnInit {
   private rms: any;
   private attributesKeys: string[] = [];
   private barChartAttributes: any;
+
+  public pen?: number;
+  public totalSum?: number;
+
   private svg: any;
   private charts: any;
   private rects: any;
 
-  private marginAll = 30;
+  private marginAll = 40;
 
   // private height: any;
   public height: any;
@@ -92,6 +95,9 @@ export class HomeComponent implements OnInit {
 
     this.data = await this.homeService.getData().toPromise();
     this.rms = this.homeService.getRMs(this.testeData);
+
+    this.pen = this.testeData.barChart.pen;
+    this.totalSum = this.testeData.barChart.totalSum;
 
     this.drawPlot();
     this.addDots();
@@ -209,13 +215,13 @@ export class HomeComponent implements OnInit {
         // .call((g: any) => g.select('.domain').remove());
         // .call((g) => g.selectAll('.tick line').attr('stroke', '#ddd'));
 
-        //Axis Title
-        // this.tempGx
-        //   .append('text')
-        //   .attr('text-anchor', 'start')
-        //   .attr('x', col * this.size)
-        //   .attr('y', this.size * row)
-        //   .text('X axis title');
+        // Axis Title
+        this.tempGx
+          .append('text')
+          .attr('text-anchor', 'start')
+          .attr('x', col * this.size + this.marginAll * 2)
+          .attr('y', this.size * row)
+          .text(this.eixosX[chart]);
 
         chart++;
       }
@@ -269,6 +275,15 @@ export class HomeComponent implements OnInit {
           .call(this.yAxis);
         // .call((g) => g.select('.domain').remove())
         // .call((g) => g.selectAll('.tick line').attr('stroke', '#ddd'));
+
+        // Axis Title
+        this.tempGy
+          .append('text')
+          .attr('text-anchor', 'start')
+          .attr('x', -this.size * (row + 1) + this.marginAll * 2)
+          .attr('y', col * this.size)
+          .attr('transform', 'rotate(-90)')
+          .text(() => (chart < 6 ? this.eixosY[chart] : 'C. Probability'));
 
         chart++;
       }
@@ -648,6 +663,7 @@ export class HomeComponent implements OnInit {
       .selectAll('g')
       .select('.tick text')
       .attr('fill', this.chartColor);
+    // d3.select('.xAxis').selectAll('text').attr('fill', this.chartColor);
 
     d3.select('.yAxis')
       .selectAll('g')
