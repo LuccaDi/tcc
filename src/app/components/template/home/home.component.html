@@ -7,12 +7,16 @@
         <g>
 
         </g>
-
       </svg>
     </mat-grid-tile>
 
     <mat-grid-tile id="tileBarChart">
       <div style="height: 100%; width: 100%;">
+        <button (click)="clearSelection()" mat-raised-button style="margin-bottom: 20px;">
+          <mat-icon>brush</mat-icon>
+          Clear Selection
+        </button>
+
 
         <mat-card class="mat-elevation-z3" style="padding: 0px;">
           <!-- <mat-card-header> -->
@@ -39,9 +43,6 @@
             </div>
           </mat-card-content>
         </mat-card>
-
-
-
       </div>
     </mat-grid-tile>
 

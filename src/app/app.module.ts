@@ -8,6 +8,8 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { HttpClientModule } from '@angular/common/http';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 
 import { HeaderComponent } from './components/template/header/header.component';
 import { HomeComponent } from './components/template/home/home.component';
@@ -30,6 +32,8 @@ import { ExpandBarChartComponent } from './components/template/expand-bar-chart/
     HttpClientModule,
     MatGridListModule,
     MatCardModule,
+    MatButtonModule,
+    MatIconModule,
   ],
   providers: [],
   bootstrap: [AppComponent],
