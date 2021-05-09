@@ -1,39 +1,40 @@
 <app-header></app-header>
 <figure id="home">
-
-  <div style="display: flex; flex-direction: row; ">
-    <div id="divCrossPlotRiskCurve" style="width: 75%; display: flex; flex-direction: column;">
-      <mat-card class=" mat-elevation-z3">
-        <mat-card-title style="text-align: center;">
+  <div id="global">
+    <div id="divCrossPlotRiskCurve">
+      <mat-card class="mat-elevation-z3">
+        <mat-card-title>
           Scatterplot
         </mat-card-title>
+
+        <mat-card-content>
+          <div id="scatterplots">
+
+          </div>
+        </mat-card-content>
       </mat-card>
-
-      <div id="scatterplots" style="display: flex; flex-direction: row; flex-wrap: wrap;">
-
-      </div>
 
       <mat-card class="mat-elevation-z3">
-        <mat-card-title style="text-align: center;">
+        <mat-card-title>
           Risk Curve
         </mat-card-title>
+
+        <mat-card-content>
+          <div id="riskCurves">
+
+          </div>
+        </mat-card-content>
       </mat-card>
-
-      <div id="riskCurves" style="display: flex; flex-direction: row; flex-wrap: wrap;">
-
-      </div>
-
     </div>
 
-    <div style="width: 25%; background-color: lightgreen;">
-      <button (click)="clearSelection()" mat-raised-button style="margin-bottom: 20px;">
+    <div id="buttonsBarChart">
+      <button (click)="clearSelection()" mat-raised-button>
         <mat-icon>brush</mat-icon>
         Clear Selection
       </button>
 
-
-      <mat-card class="mat-elevation-z3" style="padding: 0px;">
-        <mat-card-actions align="end" style="width: 100%;">
+      <mat-card class="mat-elevation-z3">
+        <mat-card-actions align="end">
           <a mat-list-item href="" (click)="openBarChartNewWindow()">
             <i class="material-icons">
               open_in_new
@@ -41,27 +42,26 @@
           </a>
         </mat-card-actions>
         <mat-card-content>
-          <div id="barChart" style="display: flex; flex-direction: column;">
+          <div id="barChart">
 
           </div>
         </mat-card-content>
-        <mat-card-footer style="margin: 0;">
+        <mat-card-footer>
           <div>
-            <h3 style="text-align: center; border-top: 1px solid; border-bottom: 1px solid; margin: 0px;">
+            <h3 class="borders">
               Sum: {{totalSum}}
             </h3>
           </div>
         </mat-card-footer>
 
-        <mat-card-footer style="margin: 0;">
+        <mat-card-footer>
           <div>
-            <h3 style="text-align: center; margin: 0px;">
+            <h3>
               Pen: {{pen}}
             </h3>
           </div>
         </mat-card-footer>
       </mat-card>
     </div>
-
   </div>
 </figure>

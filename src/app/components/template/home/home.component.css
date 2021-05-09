@@ -1,0 +1,57 @@
+#home {
+  margin: 14px 20px;
+}
+
+#global,
+#scatterplots,
+#riskCurves {
+  display: flex;
+  flex-direction: row;
+}
+
+#scatterplots,
+#riskCurves {
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
+
+#global div,
+:nth-child(2) {
+  margin-top: 20px;
+}
+
+#divCrossPlotRiskCurve,
+#barChart {
+  display: flex;
+  flex-direction: column;
+}
+
+#divCrossPlotRiskCurve {
+  width: 75%;
+  margin-right: 20px;
+}
+
+#buttonsBarChart {
+  width: 25%;
+  min-width: 235px;
+}
+
+.borders {
+  border-top: 1px solid;
+  border-bottom: 1px solid;
+}
+
+mat-card-title,
+h3 {
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  #global {
+    flex-wrap: wrap-reverse;
+  }
+  #global div {
+    width: 100%;
+    margin-right: 0px;
+  }
+}

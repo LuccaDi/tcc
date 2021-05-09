@@ -40,14 +40,11 @@ export class HomeComponent implements OnInit {
 
   private marginAll = 40;
 
-  // private height: any;
-  public height: any;
-
   private width: any;
 
   private symbol = d3.symbol();
 
-  private columns = 6;
+  private columns = 5;
   private rows = 5;
 
   private size: any;
@@ -91,20 +88,20 @@ export class HomeComponent implements OnInit {
       (this.width - (this.columns + 1) * this.marginAll) / this.columns +
       this.marginAll;
 
-    this.height = this.size * this.rows;
+    this.size = 264;
 
     divs = d3
       .select(`#scatterplots`)
       // .append('div')
       // .style('width', '100%')
-      // .selectAll('div')
-      .selectAll('svg')
+      .selectAll('div')
+      // .selectAll('svg')
       .data(this.scatterplotAxis)
-      // .join('div')
+      .join('div')
       // .attr('width', this.size)
       // .attr('height', this.size)
-      // .append('svg')
-      .join('svg')
+      .append('svg')
+      // .join('svg')
       .attr('width', this.size)
       .attr('height', this.size)
       // .style('min-width', this.size)
@@ -412,10 +409,13 @@ export class HomeComponent implements OnInit {
 
     divs = d3
       .select(`#riskCurves`)
-      .append('div')
-      .selectAll('svg')
+      // .append('div')
+      .selectAll('div')
+      // .selectAll('svg')
       .data(this.riskCurveAxis)
-      .join('svg')
+      .join('div')
+      // .join('svg')
+      .append('svg')
       .attr('width', this.size)
       .attr('height', this.size)
       .append('g');
