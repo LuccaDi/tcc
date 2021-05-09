@@ -2,7 +2,7 @@
 <figure id="home">
 
   <div style="display: flex; flex-direction: row; ">
-    <div style="width: 75%; display: flex; flex-direction: column;">
+    <div id="divCrossPlotRiskCurve" style="width: 75%; display: flex; flex-direction: column;">
       <mat-card class=" mat-elevation-z3">
         <mat-card-title style="text-align: center;">
           Scatterplot
@@ -64,88 +64,4 @@
     </div>
 
   </div>
-
-
-
-
-
-  <mat-grid-list id="gridCharts" cols="4" [rowHeight]="height" style="background-color: lightsalmon;">
-    <!-- <mat-grid-list id="gridCharts" cols="4" rowHeight="3:1.9"> -->
-
-    <mat-grid-tile id="tileCrossPlotRiskCurve" colspan='3' style="background-color: lightblue;">
-      <div style="height: 100%; width: 100%; display: flex; flex-direction: column;">
-        <!-- <mat-card class="mat-elevation-z3">
-          <mat-card-title style="text-align: center;">
-            Scatterplot
-          </mat-card-title>
-        </mat-card> -->
-
-        <!-- <div id="scatterplots" style="display: flex; flex-direction: row; flex-wrap: wrap; justify-content: flex-end;">
-
-        </div> -->
-
-        <!-- <mat-card class="mat-elevation-z3">
-          <mat-card-title style="text-align: center;">
-            Risk Curve
-          </mat-card-title>
-        </mat-card>
-
-        <div id="riskCurves" style="display: flex; flex-direction: row; flex-wrap: wrap;">
-
-        </div> -->
-
-
-        <svg id="crossPlotRiskCurveCharts" height="100%" width="100%">
-          <g>
-
-          </g>
-        </svg>
-
-      </div>
-
-
-
-    </mat-grid-tile>
-
-    <mat-grid-tile id="tileBarChart">
-      <!-- <div style="height: 100%; width: 100%;">
-        <button (click)="clearSelection()" mat-raised-button style="margin-bottom: 20px;">
-          <mat-icon>brush</mat-icon>
-          Clear Selection
-        </button>
-
-
-        <mat-card class="mat-elevation-z3" style="padding: 0px;">
-          <mat-card-actions align="end" style="padding: 20px;">
-            <a mat-list-item href="" (click)="openBarChartNewWindow()">
-              <i class="material-icons">
-                open_in_new
-              </i>
-            </a>
-          </mat-card-actions>
-          <mat-card-content>
-            <div id="barChart" style="display: flex; flex-direction: column;">
-            </div>
-          </mat-card-content>
-          <mat-card-footer>
-            <div>
-              <h3 style="text-align: center; border: 1px solid black;">
-                Sum: {{totalSum}}
-              </h3>
-            </div>
-          </mat-card-footer>
-
-          <mat-card-footer>
-            <div>
-              <h3 style="text-align: center;">
-                Pen: {{pen}}
-              </h3>
-            </div>
-          </mat-card-footer>
-        </mat-card>
-      </div> -->
-    </mat-grid-tile>
-
-  </mat-grid-list>
-
 </figure>

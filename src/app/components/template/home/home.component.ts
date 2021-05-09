@@ -82,7 +82,7 @@ export class HomeComponent implements OnInit {
   private drawScatterplots() {
     let divs;
 
-    let chartWidth: any = document.getElementById('tileCrossPlotRiskCurve')
+    let chartWidth: any = document.getElementById('divCrossPlotRiskCurve')
       ?.clientWidth;
 
     this.width = chartWidth;
