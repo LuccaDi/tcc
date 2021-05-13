@@ -116,7 +116,7 @@ export class HomeComponent implements OnInit {
         'onclick',
         (d, i) =>
           `window.open('${this.router.serializeUrl(
-            this.router.createUrlTree([`/expandChart/${i}`])
+            this.router.createUrlTree([`/expandChart`, `scatterplot`, `${i}`])
           )}', '_blank', '${features}'); return false;`
       );
 
@@ -425,7 +425,7 @@ export class HomeComponent implements OnInit {
         'onclick',
         (d, i) =>
           `window.open('${this.router.serializeUrl(
-            this.router.createUrlTree([`/expandChart/${i}`])
+            this.router.createUrlTree([`/expandChart`, `riskCurve`, `${i}`])
           )}', '_blank', '${features}'); return false;`
       );
 
@@ -598,7 +598,7 @@ export class HomeComponent implements OnInit {
         .data(this.data.models)
         .join('path')
         .attr('id', (model) => model.id)
-        // .attr('class', 'dot')
+        .attr('class', 'model')
         .attr(
           'd',
           this.symbol
@@ -711,6 +711,10 @@ export class HomeComponent implements OnInit {
       this.yAxis.scale(this.newRiskCurveYScale[id]),
       this.yAxis.tickSize(-this.width)
     );
+
+    d3.select(`#riskCurveDots${id}`)
+      .selectAll('.model')
+      .attr('d', this.symbol.size(50 / transform.k));
 
     d3.select(`#riskCurveDots${id}`).attr(
       'transform',
