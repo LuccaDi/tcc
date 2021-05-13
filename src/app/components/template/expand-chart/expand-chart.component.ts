@@ -12,14 +12,17 @@ import { HomeService } from '../../services/home.service';
 export class ExpandChartComponent implements OnInit {
   // private data: Chart[] = [];
   // private rms: Chart[] = [];
+  private scatterplotAxis: string[][] = [];
+  private riskCurveAxis: string[] = [];
   private rms: any;
-  private testeData = <Solution>{};
+  private data = <Solution>{};
   private solutions: Solution[] = [];
 
-  private data: Solution[] = [];
+  // private data: Solution[] = [];
   // private rms: newChart[] = [];
 
   private id: any;
+  private chartType: string = '';
 
   private marginAll = 30;
 
@@ -43,36 +46,6 @@ export class ExpandChartComponent implements OnInit {
   expandedChartWidth = 0;
   expandedChartHeight = 0;
 
-  private eixosX = [
-    'cRocha',
-    'cRocha',
-    'cRocha',
-    'nkrg1',
-    'nkrg1',
-    'nkrog1',
-    'cRocha',
-    'nkrg1',
-    'nkrog1',
-    'nkrow1',
-    'nkrow2',
-    'nkrw1',
-    'npcow1',
-    'krgSor1',
-    'kroSwi1',
-    'krwSor1',
-    'kvkh',
-    'kFrat',
-    'dwoc',
-    'sgc1',
-    'sor1',
-    'swi1',
-    'npAt',
-    'wpAt',
-    'voip',
-    'fro',
-  ];
-  private eixosY = ['nkrg1', 'nkrog1', 'nkrow1', 'nkrog1', 'nkrow1', 'nkrow1'];
-
   constructor(
     private homeService: HomeService,
     private route: ActivatedRoute
@@ -81,26 +54,33 @@ export class ExpandChartComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     this.onResize();
     this.id = this.route.snapshot.params.id;
+    this.chartType = this.route.snapshot.params.chart;
 
     this.solutions = await this.homeService.getData().toPromise();
-    this.testeData = this.solutions[0];
+    this.data = this.solutions[0];
 
-    this.data = await this.homeService.getData().toPromise();
+    this.scatterplotAxis = this.homeService.getScatterplotAxis(
+      this.data.fcrossUsed
+    );
+    this.riskCurveAxis = this.homeService.getRiskCurveAxis(
+      this.data.models[0].variables
+    );
+
+    // this.data = await this.homeService.getData().toPromise();
     // this.rms = await this.homeService.getRMs();
 
-    this.rms = this.homeService.getRMs(this.testeData);
+    this.rms = this.homeService.getRMs(this.data);
 
     this.drawPlot();
     this.addDots();
     this.colorChart();
-    if (this.id > 5) {
+    if (this.chartType == 'riskCurve') {
       this.drawRiskCurveLines();
     }
   }
 
   onResize() {
     let chartWidth: any = document.getElementById('gridList')?.clientWidth;
-    let chartHeight: any = document.getElementById('tileChart')?.clientHeight;
 
     if (chartWidth <= 560) {
       this.expandedChartWidth = 1;
@@ -130,13 +110,18 @@ export class ExpandChartComponent implements OnInit {
   }
 
   private addX() {
-    let chart = this.id;
     let domain;
     let extentDomain: any;
 
-    domain = this.testeData.models.map((d: any) => {
-      return d.variables[this.eixosX[chart]].value;
-    });
+    if (this.chartType == 'scatterplot') {
+      domain = this.data.models.map((d: any) => {
+        return d.variables[this.scatterplotAxis[this.id][0]].value;
+      });
+    } else {
+      domain = this.data.models.map((d: any) => {
+        return d.variables[this.riskCurveAxis[this.id]].value;
+      });
+    }
 
     extentDomain = d3.extent(domain);
 
@@ -164,13 +149,12 @@ export class ExpandChartComponent implements OnInit {
   }
 
   private addY() {
-    let chart = this.id;
     let domain;
     let extentDomain: any;
 
-    if (chart < 6) {
-      domain = this.testeData.models.map((d: any) => {
-        return d.variables[this.eixosY[chart]].value;
+    if (this.chartType == 'scatterplot') {
+      domain = this.data.models.map((d: any) => {
+        return d.variables[this.scatterplotAxis[this.id][1]].value;
       });
       extentDomain = d3.extent(domain);
     } else {
@@ -228,15 +212,13 @@ export class ExpandChartComponent implements OnInit {
   }
 
   private addDots() {
-    let chart = -1;
-
     d3.select('g')
       .append('g')
       .attr('transform', 'translate(' + this.marginAll / 2 + ',' + 0 + ')')
       .attr('id', () => 'chart')
       .attr('clip-path', () => `url(#clip)`)
       .selectAll('path')
-      .data(this.testeData.models)
+      .data(this.data.models)
       .join('path')
       .attr('id', (d: any) => d.id)
       .attr('class', 'dot')
@@ -255,20 +237,20 @@ export class ExpandChartComponent implements OnInit {
           .size(50)
       )
       .attr('transform', (d: any) => {
-        if (this.id < 6) {
+        if (this.chartType == 'scatterplot') {
           return (
             'translate(' +
-            this.x(d.variables[this.eixosX[this.id]].value) +
+            this.x(d.variables[this.scatterplotAxis[this.id][0]].value) +
             ',' +
-            this.y(d.variables[this.eixosY[this.id]].value) +
+            this.y(d.variables[this.scatterplotAxis[this.id][1]].value) +
             ')'
           );
         } else {
           return (
             'translate(' +
-            this.x(d.variables[this.eixosX[this.id]].value) +
+            this.x(d.variables[this.riskCurveAxis[this.id]].value) +
             ',' +
-            this.y(d.variables[this.eixosX[this.id]].cprob) +
+            this.y(d.variables[this.riskCurveAxis[this.id]].cprob) +
             ')'
           );
         }
@@ -283,14 +265,9 @@ export class ExpandChartComponent implements OnInit {
         }
       })
       .on('click', (d: any) => {
-        let chart = 0;
-
-        let lineX;
-        let lineY;
-
         let dotId = d.srcElement.attributes.id.value;
 
-        this.testeData.models.map((data: any) => {
+        this.data.models.map((data: any) => {
           if (data.id == dotId) {
             d3.select('#chart').selectAll('.brushing').remove();
 
@@ -303,17 +280,29 @@ export class ExpandChartComponent implements OnInit {
               .style('stroke-linejoin', 'round')
               .style('stroke-linecap', 'round')
               .attr('x1', () => {
-                lineX = this.eixosX[this.id];
-
-                return this.x(data.variables[lineX].value);
+                if (this.chartType == 'scatterplot') {
+                  return this.x(
+                    data.variables[this.scatterplotAxis[this.id][0]].value
+                  );
+                } else {
+                  return this.x(
+                    data.variables[this.riskCurveAxis[this.id]].value
+                  );
+                }
               }) // x position of the first end of the line
               .attr('y1', () => {
                 return this.y(this.newYScale.domain()[0]);
               }) // y position of the first end of the line
               .attr('x2', () => {
-                lineX = this.eixosX[this.id];
-
-                return this.x(data.variables[lineX].value);
+                if (this.chartType == 'scatterplot') {
+                  return this.x(
+                    data.variables[this.scatterplotAxis[this.id][0]].value
+                  );
+                } else {
+                  return this.x(
+                    data.variables[this.riskCurveAxis[this.id]].value
+                  );
+                }
               }) // x position of the second end of the line
               .attr('y2', () => {
                 return this.y(this.newYScale.domain()[1]);
@@ -331,24 +320,28 @@ export class ExpandChartComponent implements OnInit {
                 return this.x(this.newXScale.domain()[0]);
               }) // x position of the first end of the line
               .attr('y1', () => {
-                if (this.id < 6) {
-                  lineY = this.eixosY[this.id];
-                  return this.y(data.variables[lineY].value);
+                if (this.chartType == 'scatterplot') {
+                  return this.y(
+                    data.variables[this.scatterplotAxis[this.id][1]].value
+                  );
                 } else {
-                  lineY = this.eixosX[this.id];
-                  return this.y(data.variables[lineY].cprob);
+                  return this.y(
+                    data.variables[this.riskCurveAxis[this.id]].cprob
+                  );
                 }
               }) // y position of the first end of the line
               .attr('x2', () => {
                 return this.x(this.newXScale.domain()[1]);
               }) // x position of the second end of the line
               .attr('y2', () => {
-                if (this.id < 6) {
-                  lineY = this.eixosY[this.id];
-                  return this.y(data.variables[lineY].value);
+                if (this.chartType == 'scatterplot') {
+                  return this.y(
+                    data.variables[this.scatterplotAxis[this.id][1]].value
+                  );
                 } else {
-                  lineY = this.eixosX[this.id];
-                  return this.y(data.variables[lineY].cprob);
+                  return this.y(
+                    data.variables[this.riskCurveAxis[this.id]].cprob
+                  );
                 }
               }); // y position of the second end of the line
 
@@ -512,8 +505,11 @@ export class ExpandChartComponent implements OnInit {
 
     let cumulativeProb: number = 1;
     let previousRM: any;
-    sortedRMs = this.homeService.sortRMBy(this.rms, this.eixosX[this.id]);
-    lineX = this.eixosX[this.id];
+    sortedRMs = this.homeService.sortRMBy(
+      this.rms,
+      this.riskCurveAxis[this.id]
+    );
+    lineX = this.riskCurveAxis[this.id];
 
     sortedRMs.map((rm: any, index: number) => {
       //vertical lines

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import * as d3 from 'd3';
+import { ScaleLinear } from 'd3';
 import { Solution } from '../../model/solution.model';
 import { HomeService } from '../../services/home.service';
 
@@ -10,10 +11,26 @@ import { HomeService } from '../../services/home.service';
   styleUrls: ['./home.component.css'],
 })
 export class HomeComponent implements OnInit {
-  private selectedSolution = 0;
-  private testeData = <Solution>{};
+  private selectedSolution: number = 0;
+  private data = <Solution>{};
   private solutions: Solution[] = [];
-  private data: Solution[] = [];
+  private scatterplotAxis: string[][] = [];
+  private riskCurveAxis: string[] = [];
+
+  private scatterplotsX: ScaleLinear<number, number, never>[] = [];
+  private xAxis: any;
+  private newScatterplotXScale: ScaleLinear<number, number, never>[] = [];
+
+  private scatterplotsY: ScaleLinear<number, number, never>[] = [];
+  private yAxis: any;
+  private newScatterplotYScale: ScaleLinear<number, number, never>[] = [];
+
+  private riskCurvesX: ScaleLinear<number, number, never>[] = [];
+  private newRiskCurveXScale: ScaleLinear<number, number, never>[] = [];
+
+  private riskCurvesY: ScaleLinear<number, number, never>[] = [];
+  private newRiskCurveYScale: ScaleLinear<number, number, never>[] = [];
+
   private rms: any;
   private attributesKeys: string[] = [];
   private barChartAttributes: any;
@@ -21,68 +38,17 @@ export class HomeComponent implements OnInit {
   public pen?: number;
   public totalSum?: number;
 
-  private svg: any;
-  private charts: any;
-  private rects: any;
+  private marginTop = 25;
+  private marginRight = 10;
+  private marginBottom = 10;
+  private marginLeft = 35;
 
-  private marginAll = 40;
+  private size: number = 264;
 
-  // private height: any;
-  public height: any;
-
-  private width: any;
+  private height: number = this.size - this.marginTop - this.marginBottom;
+  private width: number = this.size - this.marginLeft - this.marginRight;
 
   private symbol = d3.symbol();
-
-  private columns = 6;
-  private rows = 5;
-  private numCharts = 26;
-
-  private eixosX = [
-    'cRocha',
-    'cRocha',
-    'cRocha',
-    'nkrg1',
-    'nkrg1',
-    'nkrog1',
-    'cRocha',
-    'nkrg1',
-    'nkrog1',
-    'nkrow1',
-    'nkrow2',
-    'nkrw1',
-    'npcow1',
-    'krgSor1',
-    'kroSwi1',
-    'krwSor1',
-    'kvkh',
-    'kFrat',
-    'dwoc',
-    'sgc1',
-    'sor1',
-    'swi1',
-    'npAt',
-    'wpAt',
-    'voip',
-    'fro',
-  ];
-  private eixosY = ['nkrg1', 'nkrog1', 'nkrow1', 'nkrog1', 'nkrow1', 'nkrow1'];
-
-  private x: any = [];
-  private y: any = [];
-
-  private newXScale: any = [];
-  private newYScale: any = [];
-
-  private xAxis: any;
-  private yAxis: any;
-
-  private tempGx: any;
-  private tempGy: any;
-
-  private def: any;
-
-  private size: any;
 
   private chartColor = '#d3d3d3';
   // private chartColor = 'red';
@@ -91,317 +57,209 @@ export class HomeComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.solutions = await this.homeService.getData().toPromise();
-    this.testeData = this.solutions[this.selectedSolution];
-
-    this.data = await this.homeService.getData().toPromise();
-    this.rms = this.homeService.getRMs(this.testeData);
-
-    this.pen = this.testeData.barChart.pen;
-    this.totalSum = this.testeData.barChart.totalSum;
-
-    this.drawPlot();
-    this.addDots();
-    this.colorCharts();
-    this.drawRiskCurveLines();
-    this.drawBarChart();
-  }
-
-  private drawPlot(): void {
-    // const symbol = d3.symbol();
-
-    // let chartWidth: any = document.getElementById('gridCharts');
-    let chartWidth: any = document.getElementById('tileCrossPlotRiskCurve')
-      ?.clientWidth;
-
-    // let home: any = document.getElementById('home');
-
-    // this.width = home?.offsetWidth - this.marginAll * 2;
-    // this.width = chartWidth - this.marginAll * 2;
-    this.width = chartWidth;
-
-    this.size =
-      (this.width - (this.columns + 1) * this.marginAll) / this.columns +
-      this.marginAll;
-
-    // this.height = this.size * this.rows - this.marginAll * 2;
-    this.height = this.size * this.rows;
-
-    this.svg = d3
-      // .select('figure#home')
-      .select('#crossPlotRiskCurveCharts')
-      .attr('viewBox', `0 0 ${this.width} ${this.height}`)
-      // .append('svg')
-      // .attr('id', 'main')
-      // .attr('width', this.width + this.marginAll * 2)
-      // .attr('height', this.height + this.marginAll * 2)
-      .select('g')
-      // .attr('transform', 'translate(' + this.marginAll + ',' + 0 + ')')
-      .attr('transform', 'translate(' + this.marginAll / 2 + ',' + 0 + ')')
-      .attr('class', 'content');
-    // .call(zoom);
-
-    this.tempGx = this.svg.append('g').attr('class', 'xAxis');
-
-    this.addX();
-
-    this.tempGy = this.svg.append('g').attr('class', 'yAxis');
-    this.addY();
-
-    this.def = this.svg.append('defs');
-
-    this.addClip();
-
-    this.rects = this.svg.append('g').attr('class', 'rects');
-
-    this.charts = this.svg.append('g').attr('class', 'charts');
-
-    this.addCharts();
-
-    this.addRect();
-
-    // Add labels
-    // dots
-    //   .selectAll('text')
-    //   .data(this.data)
-    //   .enter()
-    //   .append('text')
-    //   .text((d: any) => d.id)
-    //   .attr('x', (d: any) => x(d.cRocha))
-    //   .attr('y', (d: any) => y(d.nkrg1));
-  }
-
-  private addX() {
-    let chart = 0;
-    let domain;
-    let extentDomain: any;
-
-    for (let row = 1; row <= this.rows; row++) {
-      for (let col = 0; col < this.columns; col++) {
-        if (chart >= this.numCharts) {
-          return;
-        }
-
-        domain = this.testeData.models.map((d: any) => {
-          return d.variables[this.eixosX[chart]].value;
-        });
-
-        extentDomain = d3.extent(domain);
-
-        this.x[chart] = d3
-          .scaleLinear()
-          .domain(extentDomain)
-          .range([this.marginAll / 2, this.size - this.marginAll / 2]);
-
-        this.xAxis = d3
-          .axisBottom(this.x[chart])
-          .ticks(6, '~s')
-          .tickSize(-this.size + this.marginAll);
-
-        this.newXScale[chart] = this.x[chart];
-
-        // selectAll('.x-axis')
-        this.tempGx
-          .append('g')
-          .attr('id', 'x' + chart)
-          .attr(
-            'transform',
-            'translate(' +
-              col * this.size +
-              ',' +
-              (this.size * row - this.marginAll / 2) +
-              ')'
-          )
-          .call(this.xAxis);
-        // .call((g: any) => g.select('.domain').remove());
-        // .call((g) => g.selectAll('.tick line').attr('stroke', '#ddd'));
-
-        // Axis Title
-        this.tempGx
-          .append('text')
-          .attr('text-anchor', 'start')
-          .attr('x', col * this.size + this.marginAll * 2)
-          .attr('y', this.size * row)
-          .text(this.eixosX[chart]);
-
-        chart++;
-      }
-    }
-  }
-
-  private addY() {
-    let chart = 0;
-    let domain;
-    let extentDomain: any;
-
-    for (let row = 0; row < this.rows; row++) {
-      for (let col = 0; col < this.columns; col++) {
-        if (chart >= this.numCharts) {
-          return;
-        } else if (chart < 6) {
-          domain = this.testeData.models.map((d: any) => {
-            return d.variables[this.eixosY[chart]].value;
-          });
-
-          extentDomain = d3.extent(domain);
-        } else {
-          extentDomain = [0, 1];
-        }
-
-        this.y[chart] = d3
-          .scaleLinear()
-          .domain(extentDomain)
-          // .domain([0, 1])
-          .range([this.size - this.marginAll / 2, this.marginAll / 2]);
-
-        this.yAxis = d3
-          .axisLeft(this.y[chart])
-          .ticks(6)
-          .tickSize(-this.size + this.marginAll);
-
-        this.newYScale[chart] = this.y[chart];
-
-        // selectAll('.y-axis')
-        this.tempGy
-          .append('g')
-          .attr('id', 'y' + chart)
-          .attr(
-            'transform',
-            'translate(' +
-              (this.marginAll / 2 + this.size * col) +
-              ',' +
-              row * this.size +
-              ')'
-          )
-          .call(this.yAxis);
-        // .call((g) => g.select('.domain').remove())
-        // .call((g) => g.selectAll('.tick line').attr('stroke', '#ddd'));
-
-        // Axis Title
-        this.tempGy
-          .append('text')
-          .attr('text-anchor', 'start')
-          .attr('x', -this.size * (row + 1) + this.marginAll * 2)
-          .attr('y', col * this.size)
-          .attr('transform', 'rotate(-90)')
-          .text(() => (chart < 6 ? this.eixosY[chart] : 'C. Probability'));
-
-        chart++;
-      }
-    }
-  }
-
-  private zoomed = ({ transform }: any, id: number) => {
-    let row: any = document.getElementById('' + id)?.getAttribute('row');
-    let col: any = document.getElementById('' + id)?.getAttribute('col');
-
-    this.newXScale[id] = transform
-      .rescaleX(this.x[id])
-      .interpolate(d3.interpolateRound);
-    this.newYScale[id] = transform
-      .rescaleY(this.y[id])
-      .interpolate(d3.interpolateRound);
-
-    this.tempGx.select('#x' + id).call(this.xAxis.scale(this.newXScale[id]));
-
-    this.tempGy.select('#y' + id).call(this.yAxis.scale(this.newYScale[id]));
-
-    this.charts.select('#chart' + id).attr(
-      'transform',
-
-      'translate(' +
-        (col * this.size + transform.x) +
-        ',' +
-        (row * this.size + transform.y) +
-        ') scale(' +
-        transform.k +
-        ')'
+    this.data = this.solutions[this.selectedSolution];
+    this.scatterplotAxis = this.homeService.getScatterplotAxis(
+      this.data.fcrossUsed
+    );
+    this.riskCurveAxis = this.homeService.getRiskCurveAxis(
+      this.data.models[0].variables
     );
 
-    d3.select('#chart' + id)
-      .selectAll('.dot')
-      .attr('d', this.symbol.size(50 / transform.k));
+    this.rms = this.homeService.getRMs(this.data);
 
-    this.def
-      .select('#clip' + id)
-      .select('rect')
-      .attr('transform', 'scale(' + 1 / transform.k + ')')
-      .attr('x', this.marginAll / 2 - transform.x)
-      .attr('y', this.marginAll / 2 - transform.y);
+    this.pen = this.data.barChart.pen;
+    this.totalSum = this.data.barChart.totalSum;
 
-    d3.select('#chart' + id)
-      .select('#x')
-      .style('stroke-width', 1.5 / transform.k)
-      .attr('y1', (this.size - this.marginAll / 2 - transform.y) / transform.k) // y position of the first end of the line
-      .attr('y2', (this.marginAll / 2 - transform.y) / transform.k); // y position of the second end of the line
-
-    d3.select('#chart' + id)
-      .select('#y')
-      .style('stroke-width', 1.5 / transform.k)
-      .attr('x1', (this.marginAll / 2 - transform.x) / transform.k) // y position of the first end of the line
-      .attr('x2', (this.size - this.marginAll / 2 - transform.x) / transform.k); // y position of the second end of the line
-
-    //Resize risk curve lines
-    d3.select('#chart' + id)
-      .selectAll('.riskCurveLines')
-      .style('stroke-width', 1.5 / transform.k);
-
+    this.drawScatterplots();
+    this.drawRiskCurves();
+    this.drawBarChart();
     this.colorCharts();
-  };
-
-  private addCharts() {
-    let chart = 0;
-
-    for (let row = 0; row < this.rows; row++) {
-      for (let col = 0; col < this.columns; col++) {
-        if (chart >= this.numCharts) {
-          return;
-        }
-        this.charts
-          // .selectAll('g')
-          .append('g')
-          .attr(
-            'transform',
-            'translate(' + col * this.size + ',' + row * this.size + ')'
-          );
-
-        chart++;
-      }
-    }
   }
 
-  private addClip() {
-    let chart = 0;
-
-    for (let row = 0; row < this.rows; row++) {
-      for (let col = 0; col < this.columns; col++) {
-        if (chart >= this.numCharts) {
-          return;
-        }
-
-        this.def
-          .append('clipPath')
-          .attr('id', 'clip' + chart)
-          .append('rect')
-          .attr('x', this.marginAll / 2)
-          .attr('y', this.marginAll / 2)
-          .attr('width', this.size - this.marginAll)
-          .attr('height', this.size - this.marginAll);
-
-        chart++;
-      }
-    }
-  }
-
-  private addRect() {
-    let i = 0;
-    let chart = 0;
-
-    let id: number;
-
-    let url: string;
-
-    let features =
+  //Scatterplots
+  private drawScatterplots() {
+    let divs;
+    let svgs;
+    let svgDiv;
+    let features: string =
       'width=900, height=650,menubar=yes,location=no,resizable=no,scrollbars=no,status=no';
+
+    // let chartWidth: any = document.getElementById(
+    //   'divCrossPlotRiskCurve'
+    // )?.clientWidth;
+
+    // this.width = chartWidth;
+
+    // this.size =
+    //   (this.width - (this.columns + 1) * this.marginAll) / this.columns +
+    //   this.marginAll;
+
+    divs = d3
+      .select(`#scatterplots`)
+      // .append('div')
+      // .style('width', '100%')
+      .selectAll('div')
+      // .selectAll('svg')
+      .data(this.scatterplotAxis)
+      .join('div')
+      .style('display', 'flex')
+      .style('flex-direction', 'column')
+      .style('align-items', 'flex-end');
+
+    divs
+      .append('a')
+      .style('cursor', 'pointer')
+      .append('mat-icon')
+      .attr('class', 'material-icons')
+      .text('open_in_new')
+      .attr(
+        'onclick',
+        (d, i) =>
+          `window.open('${this.router.serializeUrl(
+            this.router.createUrlTree([`/expandChart`, `scatterplot`, `${i}`])
+          )}', '_blank', '${features}'); return false;`
+      );
+
+    svgDiv = divs
+      .append('div')
+      .style('display', 'flex')
+      .style('flex-direction', 'row');
+
+    // Y Axis Title
+    svgDiv
+      .append('div')
+      .style('display', 'flex')
+      .style('transform', 'rotate(-90deg)')
+      .style('align-self', 'center')
+      .style('position', 'absolute')
+      .append('p')
+      .text((d) => d[1]);
+
+    svgs = svgDiv
+      .append('svg')
+      // .join('svg')
+      .attr('width', this.width + this.marginLeft + this.marginRight)
+      .attr('height', this.height + this.marginBottom)
+      .style('margin-left', '15')
+
+      // .style('min-width', this.size)
+      // .attr('viewBox', `0 0 ${this.size} ${this.size}`)
+      .append('g');
+
+    // X Axis Title
+    divs
+      .append('p')
+      .style('align-self', 'center')
+      .text((d) => d[0]);
+
+    svgs
+      .append('g')
+      .attr('class', 'xAxis')
+      .attr('id', (d, i) => `scatterplotXAxis${i}`);
+
+    svgs
+      .append('g')
+      .attr('class', 'yAxis')
+      .attr('id', (d, i) => `scatterplotYAxis${i}`);
+
+    svgs
+      .append('defs')
+      .attr('class', 'clips')
+      .attr('id', (d, i) => `scatterplotDef${i}`);
+
+    svgs
+      .append('g')
+      .attr('class', 'rects')
+      .attr('id', (d, i) => `scatterplotGRect${i}`);
+
+    svgs
+      .append('g')
+      .attr('class', 'dots')
+      .attr('id', (d, i) => `scatterplotDots${i}`);
+
+    this.addScatterplotX();
+    this.addScatterplotY();
+    this.addScatterplotClips();
+    this.addScatterplotsRects();
+    this.addScatterplotsDots();
+  }
+
+  private addScatterplotX() {
+    let domain: number[];
+    let extentDomain: any;
+
+    this.scatterplotAxis.forEach((varAxis, i) => {
+      domain = this.data.models.map((d) => {
+        return d.variables[varAxis[0]].value;
+      });
+
+      extentDomain = d3.extent(domain);
+
+      this.scatterplotsX[i] = d3
+        .scaleLinear()
+        .domain(extentDomain)
+        .range([this.marginLeft, this.width + this.marginLeft]);
+
+      this.xAxis = d3
+        .axisBottom(this.scatterplotsX[i])
+        .ticks(6, '~s')
+        .tickSize(-this.height + this.marginBottom);
+
+      this.newScatterplotXScale[i] = this.scatterplotsX[i];
+
+      d3.select(`#scatterplotXAxis${i}`)
+        .attr('transform', `translate(0, ${this.height})`)
+        .call(this.xAxis);
+    });
+  }
+
+  private addScatterplotY() {
+    let domain: number[];
+    let extentDomain: any;
+
+    this.scatterplotAxis.forEach((varAxis, i) => {
+      domain = this.data.models.map((d) => {
+        return d.variables[varAxis[1]].value;
+      });
+
+      extentDomain = d3.extent(domain);
+
+      this.scatterplotsY[i] = d3
+        .scaleLinear()
+        .domain(extentDomain)
+        .range([
+          this.height + this.marginTop,
+          this.marginTop + this.marginBottom,
+        ]);
+
+      this.yAxis = d3
+        .axisLeft(this.scatterplotsY[i])
+        .ticks(6, '~s')
+        .tickSize(-this.width);
+
+      this.newScatterplotYScale[i] = this.scatterplotsY[i];
+
+      d3.select(`#scatterplotYAxis${i}`)
+        .attr('transform', `translate(${this.marginLeft}, ${-this.marginTop})`)
+        .call(this.yAxis);
+    });
+  }
+
+  private addScatterplotClips() {
+    this.scatterplotAxis.forEach((d, i) => {
+      d3.select(`#scatterplotDef${i}`)
+        .append('clipPath')
+        .attr('id', `scatterplotClip${i}`)
+        .append('rect')
+        .attr('x', this.marginLeft)
+        .attr('y', this.marginTop + this.marginBottom)
+        .attr('width', this.width)
+        .attr('height', this.height - this.marginBottom);
+    });
+  }
+
+  private addScatterplotsRects() {
+    let id: number;
 
     const zoom: any = d3
       .zoom()
@@ -410,338 +268,498 @@ export class HomeComponent implements OnInit {
       //   [0, 0],
       //   [this.width, this.height],
       // ])
-      .on('zoom', (transform) => this.zoomed(transform, id));
+      .on('zoom', (transform) => this.scatterplotZoomed(transform, id));
 
-    for (let row = 0; row < this.rows; row++) {
-      for (let col = 0; col < this.columns; col++) {
-        if (chart >= this.numCharts) {
-          return;
-        }
-
-        url = this.router.serializeUrl(
-          this.router.createUrlTree([`/expandChart/${chart}`])
-        );
-
-        //add expand button
-        this.rects
-          .append('a')
-          .attr('id', 'btn' + chart)
-          .attr(
-            'transform',
-            'translate(' +
-              ((col + 1) * this.size - this.marginAll) +
-              ',' +
-              row * this.size +
-              ')'
-          )
-          .attr('href', '')
-          .attr(
-            'onclick',
-            `window.open('${url}', '_blank', '${features}'); return false;`
-          )
-          .append('image')
-          .attr('height', '20px')
-          .attr('width', '20px')
-          .attr(
-            'href',
-            '../../../../assets/img/outline_open_in_new_black_24dp.png'
-          );
-
-        this.rects
-          // .selectAll('rect')
-          .append('rect')
-          .attr('col', col)
-          .attr('row', row)
-          .attr(
-            'transform',
-            'translate(' + col * this.size + ',' + row * this.size + ')'
-          )
-          .attr('fill', '#FFFFFF')
-          .attr('fill-opacity', '0.0')
-          // .attr('stroke', '#aaa')
-          .attr('x', this.marginAll / 2)
-          .attr('y', this.marginAll / 2)
-          .attr('width', this.size - this.marginAll)
-          .attr('height', this.size - this.marginAll)
-          .attr('id', () => i++)
-          // .call(zoom);
-          .on('mouseover', function (d: any) {
-            id = d.srcElement.id;
-          })
-          // .on('wheel', function (d: any) {
-          //   id = d.srcElement.id;
-          // })
-          .call(zoom);
-
-        chart++;
-      }
-    }
+    this.scatterplotAxis.forEach((d, i) => {
+      d3.select(`#scatterplotGRect${i}`)
+        .append('rect')
+        // .attr('col', col)
+        // .attr('row', row)
+        // .attr(
+        //   'transform',
+        //   'translate(' + col * this.size + ',' + row * this.size + ')'
+        // )
+        .attr('fill', '#FFFFFF')
+        .attr('fill-opacity', '0.0')
+        .attr('x', this.marginLeft)
+        .attr('y', this.marginBottom)
+        .attr('width', this.width)
+        .attr('height', this.height - this.marginBottom)
+        .attr('id', () => `#scatterplotRect${i}`)
+        .on('mouseover', function () {
+          id = i;
+        })
+        .call(zoom);
+    });
   }
 
-  private addDots() {
-    let chart = -1;
-    let g = 0;
-    let c = 0;
-
-    this.charts
-      .selectAll('g')
-      .attr('id', () => 'chart' + g++)
-      .attr('clip-path', () => `url(#clip${c++})`)
-      .selectAll('path')
-      .data(this.testeData.models)
-      .join('path')
-      .attr('id', (d: any) => d.id)
-      .attr('class', 'dot')
-      .attr(
-        'd',
-        this.symbol
-          .type((d: any) => {
-            if (d.predefined == true) {
-              return d3.symbolSquare;
-            } else if (d.rm == true) {
-              return d3.symbolDiamond;
-            } else {
-              return d3.symbolCircle;
-            }
-          })
-          .size(50)
-      )
-      .attr('transform', (d: any, i: any) => {
-        if (i == 0) {
-          chart++;
-        }
-        if (chart < 6) {
-          return (
-            'translate(' +
-            this.x[chart](d.variables[this.eixosX[chart]].value) +
-            ',' +
-            this.y[chart](d.variables[this.eixosY[chart]].value) +
-            ')'
-          );
-        } else {
-          return (
-            'translate(' +
-            this.x[chart](d.variables[this.eixosX[chart]].value) +
-            ',' +
-            this.y[chart](d.variables[this.eixosX[chart]].cprob) +
-            ')'
-          );
-        }
-      })
-      .attr('fill', (d: any) => {
-        if (d.predefined == true) {
-          return 'red';
-        } else if (d.rm == true) {
-          return 'green';
-        } else {
-          return '#a28ad2';
-        }
-      })
-      .on('click', (d: any) => {
-        let chart = 0;
-
-        let lineX;
-        let lineY;
-
-        let dotId = d.srcElement.attributes.id.value;
-
-        this.testeData.models.map((data: any) => {
-          if (data.id == dotId) {
-            this.clearSelection();
-
-            //vertical lines
-            this.charts
-              .selectAll('g')
-              .append('line')
-              .attr('id', 'x')
-              .attr('class', 'brushing')
-              .style('stroke', 'red') // colour the line
-              .style('stroke-width', 1.5)
-              .style('stroke-linejoin', 'round')
-              .style('stroke-linecap', 'round')
-              .attr('x1', () => {
-                lineX = this.eixosX[chart];
-
-                return this.x[chart++](data.variables[lineX].value);
-              }) // x position of the first end of the line
-              .attr('y1', () => {
-                if (chart >= this.numCharts) {
-                  chart = 0;
-                }
-
-                return this.y[chart](this.newYScale[chart++].domain()[0]);
-              }) // y position of the first end of the line
-              .attr('x2', () => {
-                if (chart >= this.numCharts) {
-                  chart = 0;
-                }
-
-                lineX = this.eixosX[chart];
-
-                return this.x[chart++](data.variables[lineX].value);
-              }) // x position of the second end of the line
-              .attr('y2', () => {
-                if (chart >= this.numCharts) {
-                  chart = 0;
-                }
-
-                return this.y[chart](this.newYScale[chart++].domain()[1]);
-              }); // y position of the second end of the line
-
-            //horizontal lines
-            this.charts
-              .selectAll('g')
-              .append('line')
-              .attr('id', 'y')
-              .attr('class', 'brushing')
-              .style('stroke', 'red') // colour the line
-              .style('stroke-width', 1.5)
-              .style('stroke-linejoin', 'round')
-              .style('stroke-linecap', 'round')
-              .attr('x1', () => {
-                if (chart >= this.numCharts) {
-                  chart = 0;
-                }
-
-                return this.x[chart](this.newXScale[chart++].domain()[0]);
-              }) // x position of the first end of the line
-              .attr('y1', () => {
-                if (chart >= this.numCharts) {
-                  chart = 0;
-                }
-
-                if (chart < 6) {
-                  lineY = this.eixosY[chart];
-                  return this.y[chart++](data.variables[lineY].value);
-                } else {
-                  lineY = this.eixosX[chart];
-                  return this.y[chart++](data.variables[lineY].cprob);
-                }
-              }) // y position of the first end of the line
-              .attr('x2', () => {
-                if (chart >= this.numCharts) {
-                  chart = 0;
-                }
-
-                return this.x[chart](this.newXScale[chart++].domain()[1]);
-              }) // x position of the second end of the line
-              .attr('y2', () => {
-                if (chart >= this.numCharts) {
-                  chart = 0;
-                }
-
-                if (chart < 6) {
-                  lineY = this.eixosY[chart];
-                  return this.y[chart++](data.variables[lineY].value);
-                } else {
-                  lineY = this.eixosX[chart];
-                  return this.y[chart++](data.variables[lineY].cprob);
-                }
-              }); // y position of the second end of the line
-
-            //bar chart brushing
-            this.attributesKeys.map((tempD) => {
-              d3.select(`#${tempD + data.attributes[tempD]}`)
-                .style('background-color', 'lightblue')
-                .style('border', 'solid medium green');
-            });
+  private addScatterplotsDots() {
+    this.scatterplotAxis.forEach((axis, axisIndex) => {
+      d3.select(`#scatterplotDots${axisIndex}`)
+        // .append('g');
+        .attr('clip-path', () => `url(#scatterplotClip${axisIndex})`)
+        .attr('transform', 'translate(0,' + -this.marginTop + ')')
+        .selectAll('path')
+        .data(this.data.models)
+        .join('path')
+        .attr('id', (model) => model.id)
+        .attr('class', 'model')
+        .attr(
+          'd',
+          this.symbol
+            .type((model) => {
+              if (model.predefined == true) {
+                return d3.symbolSquare;
+              } else if (model.rm == true) {
+                return d3.symbolDiamond;
+              } else {
+                return d3.symbolCircle;
+              }
+            })
+            .size(50)
+        )
+        .attr(
+          'transform',
+          (model) => `translate(
+            ${this.scatterplotsX[axisIndex](
+              model.variables[axis[0]].value
+            )}, ${this.scatterplotsY[axisIndex](
+            model.variables[axis[1]].value
+          )})`
+        )
+        .attr('fill', (model) => {
+          if (model.predefined == true) {
+            return 'red';
+          } else if (model.rm == true) {
+            return 'green';
+          } else {
+            return '#a28ad2';
           }
+        })
+        .on('click', (modelClicked) => {
+          this.brushing(modelClicked);
         });
-      });
+    });
   }
 
-  private colorCharts() {
-    d3.select('.xAxis')
-      .selectAll('g')
-      .select('.domain')
-      .attr('stroke', this.chartColor);
-    d3.select('.xAxis')
-      .selectAll('g')
-      .select('.tick line')
-      .attr('stroke', this.chartColor);
-    d3.select('.xAxis')
-      .selectAll('g')
-      .select('.tick text')
-      .attr('fill', this.chartColor);
-    // d3.select('.xAxis').selectAll('text').attr('fill', this.chartColor);
+  private scatterplotZoomed = ({ transform }: any, id: number) => {
+    this.newScatterplotXScale[id] = transform
+      .rescaleX(this.scatterplotsX[id])
+      .interpolate(d3.interpolateRound);
+    this.newScatterplotYScale[id] = transform
+      .rescaleY(this.scatterplotsY[id])
+      .interpolate(d3.interpolateRound);
 
-    d3.select('.yAxis')
-      .selectAll('g')
-      .select('.domain')
-      .attr('stroke', this.chartColor);
-    d3.select('.yAxis')
-      .selectAll('g')
-      .select('.tick line')
-      .attr('stroke', this.chartColor);
-    d3.select('.yAxis')
-      .selectAll('g')
-      .select('.tick text')
-      .attr('fill', this.chartColor);
+    d3.select(`#scatterplotXAxis${id}`).call(
+      this.xAxis.scale(this.newScatterplotXScale[id]),
+      this.xAxis.tickSize(-this.height + this.marginBottom)
+    );
+
+    d3.select(`#scatterplotYAxis${id}`).call(
+      this.yAxis.scale(this.newScatterplotYScale[id]),
+      this.yAxis.tickSize(-this.width)
+    );
+
+    d3.select(`#scatterplotDots${id}`).attr(
+      'transform',
+      `translate(${transform.x}, ${transform.y - this.marginTop}) scale(${
+        transform.k
+      })`
+    );
+
+    d3.select(`#scatterplotDots${id}`)
+      .selectAll('.model')
+      .attr('d', this.symbol.size(50 / transform.k));
+
+    d3.select(`#scatterplotClip${id}`)
+      .select('rect')
+      .attr('transform', 'scale(' + 1 / transform.k + ')')
+      .attr('x', this.marginLeft - transform.x)
+      .attr('y', this.marginBottom + this.marginTop - transform.y);
+
+    d3.select(`#scatterplotDots${id}`)
+      .select('#x')
+      .style('stroke-width', 1.5 / transform.k)
+      .attr('y1', (this.height + this.marginTop - transform.y) / transform.k) // y position of the first end of the line
+      .attr(
+        'y2',
+        (this.marginBottom + this.marginTop - transform.y) / transform.k
+      ); // y position of the second end of the line
+
+    d3.select(`#scatterplotDots${id}`)
+      .select('#y')
+      .style('stroke-width', 1.5 / transform.k)
+      .attr('x1', (this.width + this.marginLeft - transform.x) / transform.k) // y position of the first end of the line
+      .attr('x2', (this.marginLeft - transform.x) / transform.k); // y position of the second end of the line
+
+    this.colorCharts();
+  };
+
+  //Risk Curves
+  private drawRiskCurves() {
+    let divs;
+    let svgs;
+    let svgDiv;
+    let features: string =
+      'width=900, height=650,menubar=yes,location=no,resizable=no,scrollbars=no,status=no';
+
+    divs = d3
+      .select(`#riskCurves`)
+      // .append('div')
+      .selectAll('div')
+      // .selectAll('svg')
+      .data(this.riskCurveAxis)
+      .join('div')
+      .style('display', 'flex')
+      .style('flex-direction', 'column')
+      .style('align-items', 'flex-end');
+    // .join('svg')
+
+    divs
+      .append('a')
+      .style('cursor', 'pointer')
+      .append('mat-icon')
+      .attr('class', 'material-icons')
+      .text('open_in_new')
+      .attr(
+        'onclick',
+        (d, i) =>
+          `window.open('${this.router.serializeUrl(
+            this.router.createUrlTree([`/expandChart`, `riskCurve`, `${i}`])
+          )}', '_blank', '${features}'); return false;`
+      );
+
+    svgDiv = divs
+      .append('div')
+      .style('display', 'flex')
+      .style('flex-direction', 'row');
+
+    // Y Axis Title
+    svgDiv
+      .append('div')
+      .style('display', 'flex')
+      .style('transform', 'rotate(-90deg)')
+      .style('align-self', 'center')
+      .style('position', 'absolute')
+      .append('p')
+      .style('margin-bottom', '55px')
+      .text('C. Probability');
+
+    svgs = svgDiv
+      .append('svg')
+      .attr('width', this.width + this.marginLeft + this.marginRight)
+      .attr('height', this.height + this.marginBottom)
+      .style('margin-left', '15')
+      .append('g');
+
+    // X Axis Title
+    divs
+      .append('p')
+      .style('align-self', 'center')
+      .text((d) => d);
+
+    svgs
+      .append('g')
+      .attr('class', 'xAxis')
+      .attr('id', (d, i) => `riskCurveXAxis${i}`);
+
+    svgs
+      .append('g')
+      .attr('class', 'yAxis')
+      .attr('id', (d, i) => `riskCurveYAxis${i}`);
+
+    svgs
+      .append('defs')
+      .attr('class', 'clips')
+      .attr('id', (d, i) => `riskCurveDef${i}`);
+
+    svgs
+      .append('g')
+      .attr('class', 'rects')
+      .attr('id', (d, i) => `riskCurveGRect${i}`);
+
+    svgs
+      .append('g')
+      .attr('class', 'dots')
+      .attr('id', (d, i) => `riskCurveDots${i}`);
+
+    this.addRiskCurveX();
+    this.addRiskCurveY();
+    this.addRiskCurveClips();
+    this.addRiskCurvesRects();
+    this.addRiskCurvesDots();
+    this.drawRiskCurveLines();
+  }
+
+  private addRiskCurveX() {
+    let domain: number[];
+    let extentDomain: any;
+
+    this.riskCurveAxis.forEach((varAxis, i) => {
+      domain = this.data.models.map((d) => {
+        return d.variables[varAxis].value;
+      });
+
+      extentDomain = d3.extent(domain);
+
+      this.riskCurvesX[i] = d3
+        .scaleLinear()
+        .domain(extentDomain)
+        .range([this.marginLeft, this.width + this.marginLeft]);
+
+      this.xAxis = d3
+        .axisBottom(this.riskCurvesX[i])
+        .ticks(6, '~s')
+        .tickSize(-this.height + this.marginBottom);
+
+      this.newRiskCurveXScale[i] = this.riskCurvesX[i];
+
+      d3.select(`#riskCurveXAxis${i}`)
+        .attr('transform', `translate(0, ${this.height})`)
+        .call(this.xAxis);
+    });
+  }
+
+  private addRiskCurveY() {
+    let extentDomain: number[];
+
+    this.riskCurveAxis.forEach((varAxis, i) => {
+      extentDomain = [0, 1];
+
+      this.riskCurvesY[i] = d3
+        .scaleLinear()
+        .domain(extentDomain)
+        .range([
+          this.height + this.marginTop,
+          this.marginTop + this.marginBottom,
+        ]);
+
+      this.yAxis = d3
+        .axisLeft(this.riskCurvesY[i])
+        .ticks(6, '~s')
+        .tickSize(-this.width);
+
+      this.newRiskCurveYScale[i] = this.riskCurvesY[i];
+
+      d3.select(`#riskCurveYAxis${i}`)
+        .attr('transform', `translate(${this.marginLeft}, ${-this.marginTop})`)
+        .call(this.yAxis);
+    });
+  }
+
+  private addRiskCurveClips() {
+    this.riskCurveAxis.forEach((d, i) => {
+      d3.select(`#riskCurveDef${i}`)
+        .append('clipPath')
+        .attr('id', `riskCurveClip${i}`)
+        .append('rect')
+        .attr('x', this.marginLeft)
+        .attr('y', this.marginTop + this.marginBottom)
+        .attr('width', this.width)
+        .attr('height', this.height - this.marginBottom);
+    });
+  }
+
+  private addRiskCurvesRects() {
+    let id: number;
+
+    const zoom: any = d3
+      .zoom()
+      // .scaleExtent([0.5, 5])
+      // .translateExtent([
+      //   [0, 0],
+      //   [this.width, this.height],
+      // ])
+      .on('zoom', (transform) => this.riskCurveZoomed(transform, id));
+
+    this.riskCurveAxis.forEach((d, i) => {
+      d3.select(`#riskCurveGRect${i}`)
+        .append('rect')
+        .attr('fill', '#FFFFFF')
+        .attr('fill-opacity', '0.0')
+        .attr('x', this.marginLeft)
+        .attr('y', this.marginBottom)
+        .attr('width', this.width)
+        .attr('height', this.height - this.marginBottom)
+        .attr('id', () => `#riskCurveRect${i}`)
+        .on('mouseover', function () {
+          id = i;
+        })
+        .call(zoom);
+    });
+  }
+
+  private addRiskCurvesDots() {
+    this.riskCurveAxis.forEach((axis, axisIndex) => {
+      d3.select(`#riskCurveDots${axisIndex}`)
+        .attr('clip-path', () => `url(#riskCurveClip${axisIndex})`)
+        .attr('transform', 'translate(0,' + -this.marginTop + ')')
+        .selectAll('path')
+        .data(this.data.models)
+        .join('path')
+        .attr('id', (model) => model.id)
+        .attr('class', 'model')
+        .attr(
+          'd',
+          this.symbol
+            .type((model) => {
+              if (model.predefined == true) {
+                return d3.symbolSquare;
+              } else if (model.rm == true) {
+                return d3.symbolDiamond;
+              } else {
+                return d3.symbolCircle;
+              }
+            })
+            .size(50)
+        )
+        .attr(
+          'transform',
+          (model) =>
+            `translate(${this.riskCurvesX[axisIndex](
+              model.variables[axis].value
+            )}, ${this.riskCurvesY[axisIndex](model.variables[axis].cprob)})`
+        )
+        .attr('fill', (model) => {
+          if (model.predefined == true) {
+            return 'red';
+          } else if (model.rm == true) {
+            return 'green';
+          } else {
+            return '#a28ad2';
+          }
+        })
+        .on('click', (modelClicked) => {
+          this.brushing(modelClicked);
+        });
+    });
   }
 
   private drawRiskCurveLines() {
-    let chart: number;
     let sortedRMs: Object[];
-    let lineX: any;
 
-    for (chart = 6; chart < this.numCharts; chart++) {
+    this.riskCurveAxis.forEach((axis, axisIndex) => {
       let cumulativeProb: number = 1;
       let previousRM: any;
-      sortedRMs = this.homeService.sortRMBy(this.rms, this.eixosX[chart]);
-      lineX = this.eixosX[chart];
+      sortedRMs = this.homeService.sortRMBy(this.rms, axis);
 
-      sortedRMs.map((rm: any, index: number) => {
+      sortedRMs.forEach((rm: any, rmIndex) => {
         //vertical lines
-        d3.select(`#chart${chart}`)
+        d3.select(`#riskCurveDots${axisIndex}`)
           .append('line')
           .attr('class', 'riskCurveLines')
           .style('stroke', 'black') // colour the line
           .style('stroke-linejoin', 'round')
           .style('stroke-linecap', 'round')
           .attr('x1', () => {
-            return this.x[chart](rm.variables[lineX].value);
+            return this.riskCurvesX[axisIndex](rm.variables[axis].value);
           }) // x position of the first end of the line
           .attr('y1', () => {
-            return this.y[chart](cumulativeProb);
+            return this.riskCurvesY[axisIndex](cumulativeProb);
           }) // y position of the first end of the line
           .attr('x2', () => {
-            return this.x[chart](rm.variables[lineX].value);
+            return this.riskCurvesX[axisIndex](rm.variables[axis].value);
           }) // x position of the second end of the line
           .attr('y2', () => {
             cumulativeProb -= rm.cprobRM;
-            return this.y[chart](cumulativeProb);
+            return this.riskCurvesY[axisIndex](cumulativeProb);
           }); // y position of the second end of the line
 
         //horizontal lines
-        if (index == 0) {
+        if (rmIndex == 0) {
           return;
         }
-        previousRM = sortedRMs[index - 1];
-        d3.select(`#chart${chart}`)
+        previousRM = sortedRMs[rmIndex - 1];
+        d3.select(`#riskCurveDots${axisIndex}`)
           .append('line')
           .attr('class', 'riskCurveLines')
           .style('stroke', 'black') // colour the line
           .style('stroke-linejoin', 'round')
           .style('stroke-linecap', 'round')
           .attr('x1', () => {
-            return this.x[chart](previousRM.variables[lineX].value);
+            return this.riskCurvesX[axisIndex](
+              previousRM.variables[axis].value
+            );
           }) // x position of the first end of the line
           .attr('y1', () => {
-            return this.y[chart](cumulativeProb + rm.cprobRM);
+            return this.riskCurvesY[axisIndex](cumulativeProb + rm.cprobRM);
           }) // y position of the first end of the line
           .attr('x2', () => {
-            return this.x[chart](rm.variables[lineX].value);
+            return this.riskCurvesX[axisIndex](rm.variables[axis].value);
           }) // x position of the second end of the line
           .attr('y2', () => {
-            return this.y[chart](cumulativeProb + rm.cprobRM);
+            return this.riskCurvesY[axisIndex](cumulativeProb + rm.cprobRM);
           }); // y position of the second end of the line
       });
-    }
+    });
   }
 
+  private riskCurveZoomed = ({ transform }: any, id: number) => {
+    this.newRiskCurveXScale[id] = transform
+      .rescaleX(this.riskCurvesX[id])
+      .interpolate(d3.interpolateRound);
+    this.newRiskCurveYScale[id] = transform
+      .rescaleY(this.riskCurvesY[id])
+      .interpolate(d3.interpolateRound);
+
+    d3.select(`#riskCurveXAxis${id}`).call(
+      this.xAxis.scale(this.newRiskCurveXScale[id]),
+      this.xAxis.tickSize(-this.height + this.marginBottom)
+    );
+
+    d3.select(`#riskCurveYAxis${id}`).call(
+      this.yAxis.scale(this.newRiskCurveYScale[id]),
+      this.yAxis.tickSize(-this.width)
+    );
+
+    d3.select(`#riskCurveDots${id}`)
+      .selectAll('.model')
+      .attr('d', this.symbol.size(50 / transform.k));
+
+    d3.select(`#riskCurveDots${id}`).attr(
+      'transform',
+      `translate(${transform.x}, ${transform.y - this.marginTop}) scale(${
+        transform.k
+      })`
+    );
+
+    d3.select(`#riskCurveDots${id}`)
+      .selectAll('.model')
+      .attr('d', this.symbol.size(50 / transform.k));
+
+    d3.select(`#riskCurveClip${id}`)
+      .select('rect')
+      .attr('transform', 'scale(' + 1 / transform.k + ')')
+      .attr('x', this.marginLeft - transform.x)
+      .attr('y', this.marginBottom + this.marginTop - transform.y);
+
+    d3.select(`#riskCurveDots${id}`)
+      .select('#x')
+      .style('stroke-width', 1.5 / transform.k)
+      .attr('y1', (this.height + this.marginTop - transform.y) / transform.k) // y position of the first end of the line
+      .attr(
+        'y2',
+        (this.marginBottom + this.marginTop - transform.y) / transform.k
+      ); // y position of the second end of the line
+
+    d3.select(`#riskCurveDots${id}`)
+      .select('#y')
+      .style('stroke-width', 1.5 / transform.k)
+      .attr('x1', (this.width + this.marginLeft - transform.x) / transform.k) // y position of the first end of the line
+      .attr('x2', (this.marginLeft - transform.x) / transform.k); // y position of the second end of the line
+
+    //Resize risk curve lines
+    d3.select(`#riskCurveDots${id}`)
+      .selectAll('.riskCurveLines')
+      .style('stroke-width', 1.5 / transform.k);
+
+    this.colorCharts();
+  };
+
+  //Bar Chart
   private drawBarChart() {
     const barHeight: string = '20px';
-    this.barChartAttributes = this.testeData.barChart.attributes;
+    this.barChartAttributes = this.data.barChart.attributes;
 
     this.attributesKeys = Object.keys(this.barChartAttributes);
 
@@ -798,8 +816,159 @@ export class HomeComponent implements OnInit {
     return false;
   }
 
+  //Shared
+  private brushing(modelClicked: any) {
+    this.clearSelection();
+
+    let modelId = modelClicked.srcElement.attributes.id.value;
+
+    this.data.models.forEach((model: any) => {
+      if (model.id == modelId) {
+        //ScatteplotBrushing
+        this.scatterplotAxis.forEach((axis, axisIndex) => {
+          //vertical lines
+          d3.selectAll(`#scatterplotDots${axisIndex}`)
+            .append('line')
+            .attr('id', 'x')
+            .attr('class', 'brushing')
+            .style('stroke', 'red') // colour the line
+            .style('stroke-width', 1.5)
+            .style('stroke-linejoin', 'round')
+            .style('stroke-linecap', 'round')
+            .attr('x1', () =>
+              this.scatterplotsX[axisIndex](model.variables[axis[0]].value)
+            ) // x position of the first end of the line
+            .attr('y1', () =>
+              this.scatterplotsY[axisIndex](
+                this.newScatterplotYScale[axisIndex].domain()[0]
+              )
+            ) // y position of the first end of the line
+            .attr('x2', () =>
+              this.scatterplotsX[axisIndex](model.variables[axis[0]].value)
+            ) // x position of the second end of the line
+            .attr('y2', () =>
+              this.scatterplotsY[axisIndex](
+                this.newScatterplotYScale[axisIndex].domain()[1]
+              )
+            ); // y position of the second end of the line
+
+          //horizontal lines
+          d3.selectAll(`#scatterplotDots${axisIndex}`)
+            .append('line')
+            .attr('id', 'y')
+            .attr('class', 'brushing')
+            .style('stroke', 'red') // colour the line
+            .style('stroke-width', 1.5)
+            .style('stroke-linejoin', 'round')
+            .style('stroke-linecap', 'round')
+            .attr('x1', () =>
+              this.scatterplotsX[axisIndex](
+                this.newScatterplotXScale[axisIndex].domain()[0]
+              )
+            ) // x position of the first end of the line
+            .attr('y1', () =>
+              this.scatterplotsY[axisIndex](model.variables[axis[1]].value)
+            ) // y position of the first end of the line
+            .attr('x2', () =>
+              this.scatterplotsX[axisIndex](
+                this.newScatterplotXScale[axisIndex].domain()[1]
+              )
+            ) // x position of the second end of the line
+            .attr('y2', () =>
+              this.scatterplotsY[axisIndex](model.variables[axis[1]].value)
+            ); // y position of the second end of the line
+        });
+
+        //Risk Curve Brushing
+        this.riskCurveAxis.forEach((axis, axisIndex) => {
+          //vertical lines
+          d3.selectAll(`#riskCurveDots${axisIndex}`)
+            .append('line')
+            .attr('id', 'x')
+            .attr('class', 'brushing')
+            .style('stroke', 'red') // colour the line
+            .style('stroke-width', 1.5)
+            .style('stroke-linejoin', 'round')
+            .style('stroke-linecap', 'round')
+            .attr('x1', () =>
+              this.riskCurvesX[axisIndex](model.variables[axis].value)
+            ) // x position of the first end of the line
+            .attr('y1', () =>
+              this.riskCurvesY[axisIndex](
+                this.newRiskCurveYScale[axisIndex].domain()[0]
+              )
+            ) // y position of the first end of the line
+            .attr('x2', () =>
+              this.riskCurvesX[axisIndex](model.variables[axis].value)
+            ) // x position of the second end of the line
+            .attr('y2', () =>
+              this.riskCurvesY[axisIndex](
+                this.newRiskCurveYScale[axisIndex].domain()[1]
+              )
+            ); // y position of the second end of the line
+
+          //horizontal lines
+          d3.selectAll(`#riskCurveDots${axisIndex}`)
+            .append('line')
+            .attr('id', 'y')
+            .attr('class', 'brushing')
+            .style('stroke', 'red') // colour the line
+            .style('stroke-width', 1.5)
+            .style('stroke-linejoin', 'round')
+            .style('stroke-linecap', 'round')
+            .attr('x1', () =>
+              this.riskCurvesX[axisIndex](
+                this.newRiskCurveXScale[axisIndex].domain()[0]
+              )
+            ) // x position of the first end of the line
+            .attr('y1', () =>
+              this.riskCurvesY[axisIndex](model.variables[axis].cprob)
+            ) // y position of the first end of the line
+            .attr('x2', () =>
+              this.riskCurvesX[axisIndex](
+                this.newRiskCurveXScale[axisIndex].domain()[1]
+              )
+            ) // x position of the second end of the line
+            .attr('y2', () =>
+              this.riskCurvesY[axisIndex](model.variables[axis].cprob)
+            ); // y position of the second end of the line
+        });
+
+        //bar chart brushing
+        this.attributesKeys.map((tempD) => {
+          d3.select(`#${tempD + model.attributes[tempD]}`)
+            .style('background-color', 'lightblue')
+            .style('border', 'solid medium green');
+        });
+      }
+    });
+  }
+
+  private colorCharts() {
+    d3.selectAll('.xAxis').select('.domain').attr('stroke', this.chartColor);
+    d3.selectAll('.xAxis')
+      .selectAll('g')
+      .select('.tick line')
+      .attr('stroke', this.chartColor);
+    d3.selectAll('.xAxis')
+      .selectAll('g')
+      .select('.tick text')
+      .attr('fill', this.chartColor);
+    // d3.select('.xAxis').selectAll('text').attr('fill', this.chartColor);
+
+    d3.selectAll('.yAxis').select('.domain').attr('stroke', this.chartColor);
+    d3.selectAll('.yAxis')
+      .selectAll('g')
+      .select('.tick line')
+      .attr('stroke', this.chartColor);
+    d3.selectAll('.yAxis')
+      .selectAll('g')
+      .select('.tick text')
+      .attr('fill', this.chartColor);
+  }
+
   public clearSelection() {
-    this.charts.selectAll('g').selectAll('.brushing').remove();
+    d3.selectAll('.brushing').remove();
 
     this.attributesKeys.map((tempD, index) => {
       d3.select(`#attribute${index}`)

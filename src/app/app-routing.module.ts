@@ -10,7 +10,7 @@ const routes: Routes = [
     component: HomeComponent,
   },
   {
-    path: 'expandChart/:id',
+    path: 'expandChart/:chart/:id',
     component: ExpandChartComponent,
   },
   {

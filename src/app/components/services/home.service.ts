@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import * as d3 from 'd3';
 import { Observable } from 'rxjs/internal/Observable';
 import { Solution } from '../model/solution.model';
 
@@ -27,10 +28,33 @@ export class HomeService {
 
     return rms;
   }
+
   sortRMBy(array: Object[], by: string): Object[] {
     return array.sort(
       (a: any, b: any) =>
         0 - (a.variables[by].value > b.variables[by].value ? -1 : 1)
     );
+  }
+
+  getScatterplotAxis(variables: string[]): string[][] {
+    let combine: any = [];
+    let variablesQty: number;
+
+    variablesQty = variables.length;
+
+    let matrice: string[][] = [];
+    for (let i = 0; i < variablesQty; i++) {
+      combine.push(variables.shift());
+
+      matrice = d3.merge([matrice, d3.cross(combine, variables)]);
+
+      combine.pop();
+    }
+
+    return matrice;
+  }
+
+  getRiskCurveAxis(variables: {}): string[] {
+    return Object.keys(variables);
   }
 }
