@@ -38,16 +38,17 @@ export class HomeComponent implements OnInit {
   public pen?: number;
   public totalSum?: number;
 
-  private marginAll = 40;
+  private marginTop = 25;
+  private marginRight = 10;
+  private marginBottom = 10;
+  private marginLeft = 35;
 
-  private width: any;
+  private size: number = 264;
+
+  private height: number = this.size - this.marginTop - this.marginBottom;
+  private width: number = this.size - this.marginLeft - this.marginRight;
 
   private symbol = d3.symbol();
-
-  private columns = 5;
-  private rows = 5;
-
-  private size: any;
 
   private chartColor = '#d3d3d3';
   // private chartColor = 'red';
@@ -78,17 +79,20 @@ export class HomeComponent implements OnInit {
   //Scatterplots
   private drawScatterplots() {
     let divs;
+    let svgs;
+    let svgDiv;
+    let features: string =
+      'width=900, height=650,menubar=yes,location=no,resizable=no,scrollbars=no,status=no';
 
-    let chartWidth: any = document.getElementById('divCrossPlotRiskCurve')
-      ?.clientWidth;
+    // let chartWidth: any = document.getElementById(
+    //   'divCrossPlotRiskCurve'
+    // )?.clientWidth;
 
-    this.width = chartWidth;
+    // this.width = chartWidth;
 
-    this.size =
-      (this.width - (this.columns + 1) * this.marginAll) / this.columns +
-      this.marginAll;
-
-    this.size = 264;
+    // this.size =
+    //   (this.width - (this.columns + 1) * this.marginAll) / this.columns +
+    //   this.marginAll;
 
     divs = d3
       .select(`#scatterplots`)
@@ -98,37 +102,77 @@ export class HomeComponent implements OnInit {
       // .selectAll('svg')
       .data(this.scatterplotAxis)
       .join('div')
-      // .attr('width', this.size)
-      // .attr('height', this.size)
+      .style('display', 'flex')
+      .style('flex-direction', 'column')
+      .style('align-items', 'flex-end');
+
+    divs
+      .append('a')
+      .style('cursor', 'pointer')
+      .append('mat-icon')
+      .attr('class', 'material-icons')
+      .text('open_in_new')
+      .attr(
+        'onclick',
+        (d, i) =>
+          `window.open('${this.router.serializeUrl(
+            this.router.createUrlTree([`/expandChart/${i}`])
+          )}', '_blank', '${features}'); return false;`
+      );
+
+    svgDiv = divs
+      .append('div')
+      .style('display', 'flex')
+      .style('flex-direction', 'row');
+
+    // Y Axis Title
+    svgDiv
+      .append('div')
+      .style('display', 'flex')
+      .style('transform', 'rotate(-90deg)')
+      .style('align-self', 'center')
+      .style('position', 'absolute')
+      .append('p')
+      .text((d) => d[1]);
+
+    svgs = svgDiv
       .append('svg')
       // .join('svg')
-      .attr('width', this.size)
-      .attr('height', this.size)
+      .attr('width', this.width + this.marginLeft + this.marginRight)
+      .attr('height', this.height + this.marginBottom)
+      .style('margin-left', '15')
+
       // .style('min-width', this.size)
       // .attr('viewBox', `0 0 ${this.size} ${this.size}`)
       .append('g');
 
+    // X Axis Title
     divs
+      .append('p')
+      .style('align-self', 'center')
+      .text((d) => d[0]);
+
+    svgs
       .append('g')
       .attr('class', 'xAxis')
       .attr('id', (d, i) => `scatterplotXAxis${i}`);
 
-    divs
+    svgs
       .append('g')
       .attr('class', 'yAxis')
       .attr('id', (d, i) => `scatterplotYAxis${i}`);
 
-    divs
+    svgs
       .append('defs')
       .attr('class', 'clips')
       .attr('id', (d, i) => `scatterplotDef${i}`);
 
-    divs
+    svgs
       .append('g')
       .attr('class', 'rects')
       .attr('id', (d, i) => `scatterplotGRect${i}`);
 
-    divs
+    svgs
       .append('g')
       .attr('class', 'dots')
       .attr('id', (d, i) => `scatterplotDots${i}`);
@@ -154,28 +198,18 @@ export class HomeComponent implements OnInit {
       this.scatterplotsX[i] = d3
         .scaleLinear()
         .domain(extentDomain)
-        .range([this.marginAll / 2, this.size - this.marginAll / 2]);
+        .range([this.marginLeft, this.width + this.marginLeft]);
 
       this.xAxis = d3
         .axisBottom(this.scatterplotsX[i])
         .ticks(6, '~s')
-        .tickSize(-this.size + this.marginAll);
+        .tickSize(-this.height + this.marginBottom);
 
       this.newScatterplotXScale[i] = this.scatterplotsX[i];
 
       d3.select(`#scatterplotXAxis${i}`)
-        .append('g')
-        .attr('id', `scatterplotX${i}`)
-        .attr('transform', `translate(0, ${this.size - this.marginAll / 2})`)
+        .attr('transform', `translate(0, ${this.height})`)
         .call(this.xAxis);
-
-      // Axis Title
-      d3.select(`#scatterplotXAxis${i}`)
-        .append('text')
-        .attr('x', this.size / 2)
-        .attr('y', this.size)
-        .attr('text-anchor', 'middle')
-        .text(varAxis[0]);
     });
   }
 
@@ -193,29 +227,21 @@ export class HomeComponent implements OnInit {
       this.scatterplotsY[i] = d3
         .scaleLinear()
         .domain(extentDomain)
-        .range([this.size - this.marginAll / 2, this.marginAll / 2]);
+        .range([
+          this.height + this.marginTop,
+          this.marginTop + this.marginBottom,
+        ]);
 
       this.yAxis = d3
         .axisLeft(this.scatterplotsY[i])
         .ticks(6, '~s')
-        .tickSize(-this.size + this.marginAll);
+        .tickSize(-this.width);
 
       this.newScatterplotYScale[i] = this.scatterplotsY[i];
 
       d3.select(`#scatterplotYAxis${i}`)
-        .append('g')
-        .attr('id', `scatterplotY${i}`)
-        .attr('transform', `translate(${this.marginAll / 2}, 0)`)
+        .attr('transform', `translate(${this.marginLeft}, ${-this.marginTop})`)
         .call(this.yAxis);
-
-      // Axis Title
-      d3.select(`#scatterplotYAxis${i}`)
-        .append('text')
-        .attr('text-anchor', 'middle')
-        .attr('transform', 'rotate(-90)')
-        .attr('x', -this.size / 2)
-        .attr('y', this.marginAll / 2)
-        .text(varAxis[1]);
     });
   }
 
@@ -225,18 +251,15 @@ export class HomeComponent implements OnInit {
         .append('clipPath')
         .attr('id', `scatterplotClip${i}`)
         .append('rect')
-        .attr('x', this.marginAll / 2)
-        .attr('y', this.marginAll / 2)
-        .attr('width', this.size - this.marginAll)
-        .attr('height', this.size - this.marginAll);
+        .attr('x', this.marginLeft)
+        .attr('y', this.marginTop + this.marginBottom)
+        .attr('width', this.width)
+        .attr('height', this.height - this.marginBottom);
     });
   }
 
   private addScatterplotsRects() {
     let id: number;
-    let url: string;
-    let features: string =
-      'width=900, height=650,menubar=yes,location=no,resizable=no,scrollbars=no,status=no';
 
     const zoom: any = d3
       .zoom()
@@ -248,35 +271,6 @@ export class HomeComponent implements OnInit {
       .on('zoom', (transform) => this.scatterplotZoomed(transform, id));
 
     this.scatterplotAxis.forEach((d, i) => {
-      url = this.router.serializeUrl(
-        this.router.createUrlTree([`/expandChart/${i}`])
-      );
-
-      //add expand button
-      d3.select(`#scatterplotGRect${i}`)
-        .append('a')
-        // .attr('id', `btn${i}`)
-        // .attr(
-        //   'transform',
-        //   'translate(' +
-        //     ((col + 1) * this.size - this.marginAll) +
-        //     ',' +
-        //     row * this.size +
-        //     ')'
-        // )
-        .attr('href', '')
-        .attr(
-          'onclick',
-          `window.open('${url}', '_blank', '${features}'); return false;`
-        )
-        .append('image')
-        .attr('height', '20px')
-        .attr('width', '20px')
-        .attr(
-          'href',
-          '../../../../assets/img/outline_open_in_new_black_24dp.png'
-        );
-
       d3.select(`#scatterplotGRect${i}`)
         .append('rect')
         // .attr('col', col)
@@ -287,10 +281,10 @@ export class HomeComponent implements OnInit {
         // )
         .attr('fill', '#FFFFFF')
         .attr('fill-opacity', '0.0')
-        .attr('x', this.marginAll / 2)
-        .attr('y', this.marginAll / 2)
-        .attr('width', this.size - this.marginAll)
-        .attr('height', this.size - this.marginAll)
+        .attr('x', this.marginLeft)
+        .attr('y', this.marginBottom)
+        .attr('width', this.width)
+        .attr('height', this.height - this.marginBottom)
         .attr('id', () => `#scatterplotRect${i}`)
         .on('mouseover', function () {
           id = i;
@@ -303,11 +297,8 @@ export class HomeComponent implements OnInit {
     this.scatterplotAxis.forEach((axis, axisIndex) => {
       d3.select(`#scatterplotDots${axisIndex}`)
         // .append('g');
-        // .attr(
-        //   'transform',
-        //   'translate(' + col * this.size + ',' + row * this.size + ')'
-        // );
         .attr('clip-path', () => `url(#scatterplotClip${axisIndex})`)
+        .attr('transform', 'translate(0,' + -this.marginTop + ')')
         .selectAll('path')
         .data(this.data.models)
         .join('path')
@@ -327,15 +318,15 @@ export class HomeComponent implements OnInit {
             })
             .size(50)
         )
-        .attr('transform', (model) => {
-          return (
-            'translate(' +
-            this.scatterplotsX[axisIndex](model.variables[axis[0]].value) +
-            ',' +
-            this.scatterplotsY[axisIndex](model.variables[axis[1]].value) +
-            ')'
-          );
-        })
+        .attr(
+          'transform',
+          (model) => `translate(
+            ${this.scatterplotsX[axisIndex](
+              model.variables[axis[0]].value
+            )}, ${this.scatterplotsY[axisIndex](
+            model.variables[axis[1]].value
+          )})`
+        )
         .attr('fill', (model) => {
           if (model.predefined == true) {
             return 'red';
@@ -359,23 +350,21 @@ export class HomeComponent implements OnInit {
       .rescaleY(this.scatterplotsY[id])
       .interpolate(d3.interpolateRound);
 
-    d3.select(`#scatterplotX${id}`).call(
-      this.xAxis.scale(this.newScatterplotXScale[id])
+    d3.select(`#scatterplotXAxis${id}`).call(
+      this.xAxis.scale(this.newScatterplotXScale[id]),
+      this.xAxis.tickSize(-this.height + this.marginBottom)
     );
 
-    d3.select(`#scatterplotY${id}`).call(
-      this.yAxis.scale(this.newScatterplotYScale[id])
+    d3.select(`#scatterplotYAxis${id}`).call(
+      this.yAxis.scale(this.newScatterplotYScale[id]),
+      this.yAxis.tickSize(-this.width)
     );
 
     d3.select(`#scatterplotDots${id}`).attr(
       'transform',
-      'translate(' +
-        transform.x +
-        ',' +
-        transform.y +
-        ') scale(' +
-        transform.k +
-        ')'
+      `translate(${transform.x}, ${transform.y - this.marginTop}) scale(${
+        transform.k
+      })`
     );
 
     d3.select(`#scatterplotDots${id}`)
@@ -385,20 +374,23 @@ export class HomeComponent implements OnInit {
     d3.select(`#scatterplotClip${id}`)
       .select('rect')
       .attr('transform', 'scale(' + 1 / transform.k + ')')
-      .attr('x', this.marginAll / 2 - transform.x)
-      .attr('y', this.marginAll / 2 - transform.y);
+      .attr('x', this.marginLeft - transform.x)
+      .attr('y', this.marginBottom + this.marginTop - transform.y);
 
     d3.select(`#scatterplotDots${id}`)
       .select('#x')
       .style('stroke-width', 1.5 / transform.k)
-      .attr('y1', (this.size - this.marginAll / 2 - transform.y) / transform.k) // y position of the first end of the line
-      .attr('y2', (this.marginAll / 2 - transform.y) / transform.k); // y position of the second end of the line
+      .attr('y1', (this.height + this.marginTop - transform.y) / transform.k) // y position of the first end of the line
+      .attr(
+        'y2',
+        (this.marginBottom + this.marginTop - transform.y) / transform.k
+      ); // y position of the second end of the line
 
     d3.select(`#scatterplotDots${id}`)
       .select('#y')
       .style('stroke-width', 1.5 / transform.k)
-      .attr('x1', (this.marginAll / 2 - transform.x) / transform.k) // y position of the first end of the line
-      .attr('x2', (this.size - this.marginAll / 2 - transform.x) / transform.k); // y position of the second end of the line
+      .attr('x1', (this.width + this.marginLeft - transform.x) / transform.k) // y position of the first end of the line
+      .attr('x2', (this.marginLeft - transform.x) / transform.k); // y position of the second end of the line
 
     this.colorCharts();
   };
@@ -406,6 +398,10 @@ export class HomeComponent implements OnInit {
   //Risk Curves
   private drawRiskCurves() {
     let divs;
+    let svgs;
+    let svgDiv;
+    let features: string =
+      'width=900, height=650,menubar=yes,location=no,resizable=no,scrollbars=no,status=no';
 
     divs = d3
       .select(`#riskCurves`)
@@ -414,33 +410,75 @@ export class HomeComponent implements OnInit {
       // .selectAll('svg')
       .data(this.riskCurveAxis)
       .join('div')
-      // .join('svg')
-      .append('svg')
-      .attr('width', this.size)
-      .attr('height', this.size)
-      .append('g');
+      .style('display', 'flex')
+      .style('flex-direction', 'column')
+      .style('align-items', 'flex-end');
+    // .join('svg')
 
     divs
+      .append('a')
+      .style('cursor', 'pointer')
+      .append('mat-icon')
+      .attr('class', 'material-icons')
+      .text('open_in_new')
+      .attr(
+        'onclick',
+        (d, i) =>
+          `window.open('${this.router.serializeUrl(
+            this.router.createUrlTree([`/expandChart/${i}`])
+          )}', '_blank', '${features}'); return false;`
+      );
+
+    svgDiv = divs
+      .append('div')
+      .style('display', 'flex')
+      .style('flex-direction', 'row');
+
+    // Y Axis Title
+    svgDiv
+      .append('div')
+      .style('display', 'flex')
+      .style('transform', 'rotate(-90deg)')
+      .style('align-self', 'center')
+      .style('position', 'absolute')
+      .append('p')
+      .style('margin-bottom', '55px')
+      .text('C. Probability');
+
+    svgs = svgDiv
+      .append('svg')
+      .attr('width', this.width + this.marginLeft + this.marginRight)
+      .attr('height', this.height + this.marginBottom)
+      .style('margin-left', '15')
+      .append('g');
+
+    // X Axis Title
+    divs
+      .append('p')
+      .style('align-self', 'center')
+      .text((d) => d);
+
+    svgs
       .append('g')
       .attr('class', 'xAxis')
       .attr('id', (d, i) => `riskCurveXAxis${i}`);
 
-    divs
+    svgs
       .append('g')
       .attr('class', 'yAxis')
       .attr('id', (d, i) => `riskCurveYAxis${i}`);
 
-    divs
+    svgs
       .append('defs')
       .attr('class', 'clips')
       .attr('id', (d, i) => `riskCurveDef${i}`);
 
-    divs
+    svgs
       .append('g')
       .attr('class', 'rects')
-      .attr('id', (d, i) => `riskCurveRect${i}`);
+      .attr('id', (d, i) => `riskCurveGRect${i}`);
 
-    divs
+    svgs
       .append('g')
       .attr('class', 'dots')
       .attr('id', (d, i) => `riskCurveDots${i}`);
@@ -467,28 +505,18 @@ export class HomeComponent implements OnInit {
       this.riskCurvesX[i] = d3
         .scaleLinear()
         .domain(extentDomain)
-        .range([this.marginAll / 2, this.size - this.marginAll / 2]);
+        .range([this.marginLeft, this.width + this.marginLeft]);
 
       this.xAxis = d3
         .axisBottom(this.riskCurvesX[i])
         .ticks(6, '~s')
-        .tickSize(-this.size + this.marginAll);
+        .tickSize(-this.height + this.marginBottom);
 
       this.newRiskCurveXScale[i] = this.riskCurvesX[i];
 
       d3.select(`#riskCurveXAxis${i}`)
-        .append('g')
-        .attr('id', `riskCurveX${i}`)
-        .attr('transform', `translate(0, ${this.size - this.marginAll / 2})`)
+        .attr('transform', `translate(0, ${this.height})`)
         .call(this.xAxis);
-
-      // Axis Title
-      d3.select(`#riskCurveXAxis${i}`)
-        .append('text')
-        .attr('x', this.size / 2)
-        .attr('y', this.size)
-        .attr('text-anchor', 'middle')
-        .text(varAxis);
     });
   }
 
@@ -501,29 +529,21 @@ export class HomeComponent implements OnInit {
       this.riskCurvesY[i] = d3
         .scaleLinear()
         .domain(extentDomain)
-        .range([this.size - this.marginAll / 2, this.marginAll / 2]);
+        .range([
+          this.height + this.marginTop,
+          this.marginTop + this.marginBottom,
+        ]);
 
       this.yAxis = d3
         .axisLeft(this.riskCurvesY[i])
         .ticks(6, '~s')
-        .tickSize(-this.size + this.marginAll);
+        .tickSize(-this.width);
 
       this.newRiskCurveYScale[i] = this.riskCurvesY[i];
 
       d3.select(`#riskCurveYAxis${i}`)
-        .append('g')
-        .attr('id', `riskCurveY${i}`)
-        .attr('transform', `translate(${this.marginAll / 2}, 0)`)
+        .attr('transform', `translate(${this.marginLeft}, ${-this.marginTop})`)
         .call(this.yAxis);
-
-      // Axis Title
-      d3.select(`#riskCurveYAxis${i}`)
-        .append('text')
-        .attr('text-anchor', 'middle')
-        .attr('transform', 'rotate(-90)')
-        .attr('x', -this.size / 2)
-        .attr('y', this.marginAll / 2)
-        .text(`C. Probability`);
     });
   }
 
@@ -533,18 +553,15 @@ export class HomeComponent implements OnInit {
         .append('clipPath')
         .attr('id', `riskCurveClip${i}`)
         .append('rect')
-        .attr('x', this.marginAll / 2)
-        .attr('y', this.marginAll / 2)
-        .attr('width', this.size - this.marginAll)
-        .attr('height', this.size - this.marginAll);
+        .attr('x', this.marginLeft)
+        .attr('y', this.marginTop + this.marginBottom)
+        .attr('width', this.width)
+        .attr('height', this.height - this.marginBottom);
     });
   }
 
   private addRiskCurvesRects() {
     let id: number;
-    let url: string;
-    let features: string =
-      'width=900, height=650,menubar=yes,location=no,resizable=no,scrollbars=no,status=no';
 
     const zoom: any = d3
       .zoom()
@@ -556,50 +573,15 @@ export class HomeComponent implements OnInit {
       .on('zoom', (transform) => this.riskCurveZoomed(transform, id));
 
     this.riskCurveAxis.forEach((d, i) => {
-      url = this.router.serializeUrl(
-        this.router.createUrlTree([`/expandChart/${i}`])
-      );
-
-      //add expand button
-      d3.select(`#riskCurveRect${i}`)
-        .append('a')
-        // .attr('id', `btn${i}`)
-        // .attr(
-        //   'transform',
-        //   'translate(' +
-        //     ((col + 1) * this.size - this.marginAll) +
-        //     ',' +
-        //     row * this.size +
-        //     ')'
-        // )
-        .attr('href', '')
-        .attr(
-          'onclick',
-          `window.open('${url}', '_blank', '${features}'); return false;`
-        )
-        .append('image')
-        .attr('height', '20px')
-        .attr('width', '20px')
-        .attr(
-          'href',
-          '../../../../assets/img/outline_open_in_new_black_24dp.png'
-        );
-
-      d3.select(`#riskCurveRect${i}`)
+      d3.select(`#riskCurveGRect${i}`)
         .append('rect')
-        // .attr('col', col)
-        // .attr('row', row)
-        // .attr(
-        //   'transform',
-        //   'translate(' + col * this.size + ',' + row * this.size + ')'
-        // )
         .attr('fill', '#FFFFFF')
         .attr('fill-opacity', '0.0')
-        .attr('x', this.marginAll / 2)
-        .attr('y', this.marginAll / 2)
-        .attr('width', this.size - this.marginAll)
-        .attr('height', this.size - this.marginAll)
-        // .attr('id', () => i)
+        .attr('x', this.marginLeft)
+        .attr('y', this.marginBottom)
+        .attr('width', this.width)
+        .attr('height', this.height - this.marginBottom)
+        .attr('id', () => `#riskCurveRect${i}`)
         .on('mouseover', function () {
           id = i;
         })
@@ -610,12 +592,8 @@ export class HomeComponent implements OnInit {
   private addRiskCurvesDots() {
     this.riskCurveAxis.forEach((axis, axisIndex) => {
       d3.select(`#riskCurveDots${axisIndex}`)
-        // .append('g');
-        // .attr(
-        //   'transform',
-        //   'translate(' + col * this.size + ',' + row * this.size + ')'
-        // );
         .attr('clip-path', () => `url(#riskCurveClip${axisIndex})`)
+        .attr('transform', 'translate(0,' + -this.marginTop + ')')
         .selectAll('path')
         .data(this.data.models)
         .join('path')
@@ -638,11 +616,9 @@ export class HomeComponent implements OnInit {
         .attr(
           'transform',
           (model) =>
-            'translate(' +
-            this.riskCurvesX[axisIndex](model.variables[axis].value) +
-            ',' +
-            this.riskCurvesY[axisIndex](model.variables[axis].cprob) +
-            ')'
+            `translate(${this.riskCurvesX[axisIndex](
+              model.variables[axis].value
+            )}, ${this.riskCurvesY[axisIndex](model.variables[axis].cprob)})`
         )
         .attr('fill', (model) => {
           if (model.predefined == true) {
@@ -726,23 +702,21 @@ export class HomeComponent implements OnInit {
       .rescaleY(this.riskCurvesY[id])
       .interpolate(d3.interpolateRound);
 
-    d3.select(`#riskCurveX${id}`).call(
-      this.xAxis.scale(this.newRiskCurveXScale[id])
+    d3.select(`#riskCurveXAxis${id}`).call(
+      this.xAxis.scale(this.newRiskCurveXScale[id]),
+      this.xAxis.tickSize(-this.height + this.marginBottom)
     );
 
-    d3.select(`#riskCurveY${id}`).call(
-      this.yAxis.scale(this.newRiskCurveYScale[id])
+    d3.select(`#riskCurveYAxis${id}`).call(
+      this.yAxis.scale(this.newRiskCurveYScale[id]),
+      this.yAxis.tickSize(-this.width)
     );
 
     d3.select(`#riskCurveDots${id}`).attr(
       'transform',
-      'translate(' +
-        transform.x +
-        ',' +
-        transform.y +
-        ') scale(' +
-        transform.k +
-        ')'
+      `translate(${transform.x}, ${transform.y - this.marginTop}) scale(${
+        transform.k
+      })`
     );
 
     d3.select(`#riskCurveDots${id}`)
@@ -752,20 +726,23 @@ export class HomeComponent implements OnInit {
     d3.select(`#riskCurveClip${id}`)
       .select('rect')
       .attr('transform', 'scale(' + 1 / transform.k + ')')
-      .attr('x', this.marginAll / 2 - transform.x)
-      .attr('y', this.marginAll / 2 - transform.y);
+      .attr('x', this.marginLeft - transform.x)
+      .attr('y', this.marginBottom + this.marginTop - transform.y);
 
     d3.select(`#riskCurveDots${id}`)
       .select('#x')
       .style('stroke-width', 1.5 / transform.k)
-      .attr('y1', (this.size - this.marginAll / 2 - transform.y) / transform.k) // y position of the first end of the line
-      .attr('y2', (this.marginAll / 2 - transform.y) / transform.k); // y position of the second end of the line
+      .attr('y1', (this.height + this.marginTop - transform.y) / transform.k) // y position of the first end of the line
+      .attr(
+        'y2',
+        (this.marginBottom + this.marginTop - transform.y) / transform.k
+      ); // y position of the second end of the line
 
     d3.select(`#riskCurveDots${id}`)
       .select('#y')
       .style('stroke-width', 1.5 / transform.k)
-      .attr('x1', (this.marginAll / 2 - transform.x) / transform.k) // y position of the first end of the line
-      .attr('x2', (this.size - this.marginAll / 2 - transform.x) / transform.k); // y position of the second end of the line
+      .attr('x1', (this.width + this.marginLeft - transform.x) / transform.k) // y position of the first end of the line
+      .attr('x2', (this.marginLeft - transform.x) / transform.k); // y position of the second end of the line
 
     //Resize risk curve lines
     d3.select(`#riskCurveDots${id}`)
@@ -964,10 +941,7 @@ export class HomeComponent implements OnInit {
   }
 
   private colorCharts() {
-    d3.selectAll('.xAxis')
-      .selectAll('g')
-      .select('.domain')
-      .attr('stroke', this.chartColor);
+    d3.selectAll('.xAxis').select('.domain').attr('stroke', this.chartColor);
     d3.selectAll('.xAxis')
       .selectAll('g')
       .select('.tick line')
@@ -978,10 +952,7 @@ export class HomeComponent implements OnInit {
       .attr('fill', this.chartColor);
     // d3.select('.xAxis').selectAll('text').attr('fill', this.chartColor);
 
-    d3.selectAll('.yAxis')
-      .selectAll('g')
-      .select('.domain')
-      .attr('stroke', this.chartColor);
+    d3.selectAll('.yAxis').select('.domain').attr('stroke', this.chartColor);
     d3.selectAll('.yAxis')
       .selectAll('g')
       .select('.tick line')
