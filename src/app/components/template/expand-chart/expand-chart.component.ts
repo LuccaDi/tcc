@@ -46,36 +46,6 @@ export class ExpandChartComponent implements OnInit {
   expandedChartWidth = 0;
   expandedChartHeight = 0;
 
-  private eixosX = [
-    'cRocha',
-    'cRocha',
-    'cRocha',
-    'nkrg1',
-    'nkrg1',
-    'nkrog1',
-    'cRocha',
-    'nkrg1',
-    'nkrog1',
-    'nkrow1',
-    'nkrow2',
-    'nkrw1',
-    'npcow1',
-    'krgSor1',
-    'kroSwi1',
-    'krwSor1',
-    'kvkh',
-    'kFrat',
-    'dwoc',
-    'sgc1',
-    'sor1',
-    'swi1',
-    'npAt',
-    'wpAt',
-    'voip',
-    'fro',
-  ];
-  private eixosY = ['nkrg1', 'nkrog1', 'nkrow1', 'nkrog1', 'nkrow1', 'nkrow1'];
-
   constructor(
     private homeService: HomeService,
     private route: ActivatedRoute
@@ -111,7 +81,6 @@ export class ExpandChartComponent implements OnInit {
 
   onResize() {
     let chartWidth: any = document.getElementById('gridList')?.clientWidth;
-    let chartHeight: any = document.getElementById('tileChart')?.clientHeight;
 
     if (chartWidth <= 560) {
       this.expandedChartWidth = 1;
