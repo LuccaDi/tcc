@@ -17,6 +17,8 @@ export class HomeComponent implements OnInit {
   private scatterplotAxis: string[][] = [];
   private riskCurveAxis: string[] = [];
 
+  public isDisabled: boolean = false;
+
   private scatterplotsX: ScaleLinear<number, number, never>[] = [];
   private xAxis: any;
   private newScatterplotXScale: ScaleLinear<number, number, never>[] = [];
@@ -985,6 +987,14 @@ export class HomeComponent implements OnInit {
       this.data = this.solutions[this.selectedSolution];
     } else {
       console.log('That is the last solution');
+    }
+  }
+
+  public disableButtons(tabIndex: number) {
+    if (tabIndex == 0) {
+      this.isDisabled = false;
+    } else if (tabIndex == 1) {
+      this.isDisabled = true;
     }
   }
 }
