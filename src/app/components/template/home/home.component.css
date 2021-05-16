@@ -2,7 +2,12 @@
   margin: 14px 20px;
 }
 
-#global,
+.solutionButtons {
+  margin-top: 20px;
+  margin-right: 20px;
+}
+
+#charts,
 #scatterplots,
 #riskCurves {
   display: flex;
@@ -15,8 +20,7 @@
   justify-content: space-around;
 }
 
-#global div,
-:nth-child(2) {
+#charts mat-card {
   margin-top: 20px;
 }
 
@@ -51,10 +55,10 @@ a {
 }
 
 @media (max-width: 480px) {
-  #global {
+  #charts {
     flex-wrap: wrap-reverse;
   }
-  #global div {
+  #charts div {
     width: 100%;
     margin-right: 0px;
   }

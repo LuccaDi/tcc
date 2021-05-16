@@ -1,6 +1,29 @@
 <app-header></app-header>
 <figure id="home">
-  <div id="global">
+  <div>
+    <mat-card class="mat-elevation-z3">
+      <mat-card-title>
+        Solution 1
+      </mat-card-title>
+    </mat-card>
+
+    <button mat-raised-button class="solutionButtons">
+      <mat-icon>arrow_back</mat-icon>
+      Previous Solution
+    </button>
+
+    <button mat-raised-button class="solutionButtons">
+      Next Solution
+      <mat-icon>navigate_next</mat-icon>
+    </button>
+
+    <button (click)="clearSelection()" mat-raised-button class="solutionButtons">
+      <!-- <mat-icon>brush</mat-icon> -->
+      Clear Selection
+    </button>
+  </div>
+
+  <div id="charts">
     <div id="divCrossPlotRiskCurve">
       <mat-card class="mat-elevation-z3">
         <mat-card-title>
@@ -28,11 +51,6 @@
     </div>
 
     <div id="buttonsBarChart">
-      <button (click)="clearSelection()" mat-raised-button>
-        <mat-icon>brush</mat-icon>
-        Clear Selection
-      </button>
-
       <mat-card class="mat-elevation-z3">
         <mat-card-actions align="end">
           <a mat-icon-button (click)="openBarChartNewWindow()">
