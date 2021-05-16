@@ -3,19 +3,37 @@
   <div>
     <mat-card class="mat-elevation-z3">
       <mat-card-title>
-        Solution 1
+        Solution {{selectedSolution + 1}}
       </mat-card-title>
     </mat-card>
+
+    <mat-form-field class="solutionButtons">
+      <mat-label>Solution</mat-label>
+      <mat-select [(value)]="selectedSolution">
+        <mat-option *ngFor="let solution of solutions; let i = index" [value]="i">
+          Solution {{i + 1}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
 
     <button mat-raised-button class="solutionButtons">
       <mat-icon>arrow_back</mat-icon>
       Previous Solution
     </button>
 
-    <button mat-raised-button class="solutionButtons">
+    <button mat-raised-button (click)="nextSolution()" class="solutionButtons">
       Next Solution
       <mat-icon>navigate_next</mat-icon>
     </button>
+
+    <!-- <mat-form-field appearance="fill">
+      <mat-label>Favorite food</mat-label>
+      <mat-select>
+        <mat-option *ngFor="let food of foods" [value]="food.value">
+          {{food.viewValue}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field> -->
 
     <button (click)="clearSelection()" mat-raised-button class="solutionButtons">
       <!-- <mat-icon>brush</mat-icon> -->

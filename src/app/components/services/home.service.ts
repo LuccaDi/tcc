@@ -15,10 +15,13 @@ export class HomeService {
 
   testeNewJson = 'https://run.mocky.io/v3/67e9a971-49f2-4b34-ab1a-b33a7e097b6e';
 
+  multiSolutions =
+    'https://run.mocky.io/v3/619b6610-a680-4a31-8d4f-95ffc40105fd';
+
   constructor(private http: HttpClient) {}
 
-  getData(): Observable<Solution[]> {
-    return this.http.get<Solution[]>(this.testeNewJson);
+  getSolutions(): Observable<Solution[]> {
+    return this.http.get<Solution[]>(this.multiSolutions);
   }
 
   getRMs(solution: Solution) {

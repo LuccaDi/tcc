@@ -56,7 +56,7 @@ export class ExpandChartComponent implements OnInit {
     this.id = this.route.snapshot.params.id;
     this.chartType = this.route.snapshot.params.chart;
 
-    this.solutions = await this.homeService.getData().toPromise();
+    this.solutions = await this.homeService.getSolutions().toPromise();
     this.data = this.solutions[0];
 
     this.scatterplotAxis = this.homeService.getScatterplotAxis(

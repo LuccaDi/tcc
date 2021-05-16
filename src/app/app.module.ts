@@ -10,6 +10,7 @@ import { MatGridListModule } from '@angular/material/grid-list';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
 
 import { HeaderComponent } from './components/template/header/header.component';
 import { HomeComponent } from './components/template/home/home.component';
@@ -34,6 +35,7 @@ import { ExpandBarChartComponent } from './components/template/expand-bar-chart/
     MatCardModule,
     MatButtonModule,
     MatIconModule,
+    MatSelectModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

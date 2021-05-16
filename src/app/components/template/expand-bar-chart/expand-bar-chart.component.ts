@@ -29,7 +29,7 @@ export class ExpandBarChartComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.solution = this.route.snapshot.params.solution;
-    this.solutions = await this.homeService.getData().toPromise();
+    this.solutions = await this.homeService.getSolutions().toPromise();
 
     this.barChart = this.solutions[0].barChart;
 

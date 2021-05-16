@@ -11,9 +11,9 @@ import { HomeService } from '../../services/home.service';
   styleUrls: ['./home.component.css'],
 })
 export class HomeComponent implements OnInit {
-  private selectedSolution: number = 0;
+  public selectedSolution: number = 0;
   private data = <Solution>{};
-  private solutions: Solution[] = [];
+  public solutions: Solution[] = [];
   private scatterplotAxis: string[][] = [];
   private riskCurveAxis: string[] = [];
 
@@ -56,7 +56,7 @@ export class HomeComponent implements OnInit {
   constructor(private homeService: HomeService, private router: Router) {}
 
   async ngOnInit(): Promise<void> {
-    this.solutions = await this.homeService.getData().toPromise();
+    this.solutions = await this.homeService.getSolutions().toPromise();
     this.data = this.solutions[this.selectedSolution];
     this.scatterplotAxis = this.homeService.getScatterplotAxis(
       this.data.fcrossUsed
@@ -976,5 +976,15 @@ export class HomeComponent implements OnInit {
         .style('background-color', '')
         .style('border', 'solid medium grey');
     });
+  }
+
+  public nextSolution() {
+    console.log(this.selectedSolution);
+    if (this.selectedSolution < this.solutions.length - 1) {
+      this.selectedSolution++;
+      this.data = this.solutions[this.selectedSolution];
+    } else {
+      console.log('That is the last solution');
+    }
   }
 }
