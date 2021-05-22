@@ -17,6 +17,8 @@ export class HomeComponent implements OnInit {
   private scatterplotAxis: string[][] = [];
   private riskCurveAxis: string[] = [];
 
+  public combinedRiskCurvesRendered: boolean = false;
+
   public isDisabled: boolean = false;
 
   private scatterplotsX: ScaleLinear<number, number, never>[] = [];
@@ -980,8 +982,16 @@ export class HomeComponent implements OnInit {
     });
   }
 
+  public previousSolution() {
+    if (this.selectedSolution > 0) {
+      this.selectedSolution--;
+      this.data = this.solutions[this.selectedSolution];
+    } else {
+      console.log('That is the first solution');
+    }
+  }
+
   public nextSolution() {
-    console.log(this.selectedSolution);
     if (this.selectedSolution < this.solutions.length - 1) {
       this.selectedSolution++;
       this.data = this.solutions[this.selectedSolution];
@@ -995,6 +1005,7 @@ export class HomeComponent implements OnInit {
       this.isDisabled = false;
     } else if (tabIndex == 1) {
       this.isDisabled = true;
+      this.combinedRiskCurvesRendered = true;
     }
   }
 }

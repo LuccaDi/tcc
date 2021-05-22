@@ -1,11 +1,6 @@
 <app-header></app-header>
 <figure id="home">
 
-  <!-- <nav mat-tab-nav-bar [backgroundColor]="background">
-    <a mat-tab-link *ngFor="let link of links" (click)="activeLink = link" [active]="activeLink == link"> {{link}} </a>
-    <a mat-tab-link disabled>Disabled Link</a>
-  </nav> -->
-
   <div>
 
     <mat-form-field class="solutionButtons">
@@ -17,7 +12,7 @@
       </mat-select>
     </mat-form-field>
 
-    <button mat-raised-button class="solutionButtons" [disabled]="isDisabled">
+    <button mat-raised-button class="solutionButtons" (click)="previousSolution()" [disabled]="isDisabled">
       <mat-icon>navigate_before</mat-icon>
       Previous Solution
     </button>
@@ -26,15 +21,6 @@
       Next Solution
       <mat-icon>navigate_next</mat-icon>
     </button>
-
-    <!-- <mat-form-field appearance="fill">
-      <mat-label>Favorite food</mat-label>
-      <mat-select>
-        <mat-option *ngFor="let food of foods" [value]="food.value">
-          {{food.viewValue}}
-        </mat-option>
-      </mat-select>
-    </mat-form-field> -->
 
     <button (click)="clearSelection()" mat-raised-button class="solutionButtons">
       <!-- <mat-icon>brush</mat-icon> -->
@@ -115,7 +101,7 @@
 
     <mat-tab label="Combined Risk Curves">
       <div class="mat-elevation-z4">
-        <app-combined-risk-curves></app-combined-risk-curves>
+        <app-combined-risk-curves *ngIf="combinedRiskCurvesRendered == true"></app-combined-risk-curves>
       </div>
     </mat-tab>
   </mat-tab-group>
