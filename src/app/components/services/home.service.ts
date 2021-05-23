@@ -16,7 +16,7 @@ export class HomeService {
   testeNewJson = 'https://run.mocky.io/v3/67e9a971-49f2-4b34-ab1a-b33a7e097b6e';
 
   multiSolutions =
-    'https://run.mocky.io/v3/f8be9185-4748-4660-9704-94d5af04b1b2';
+    'https://run.mocky.io/v3/7bd00a16-cb46-42d1-9e83-150a23748115';
 
   constructor(private http: HttpClient) {}
 

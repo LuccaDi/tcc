@@ -62,9 +62,11 @@ export class HomeComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     this.solutions = await this.homeService.getSolutions().toPromise();
     this.data = this.solutions[this.selectedSolution];
+
     this.scatterplotAxis = this.homeService.getScatterplotAxis(
       this.data.fcrossUsed
     );
+
     this.riskCurveAxis = this.homeService.getRiskCurveAxis(
       this.data.models[0].variables
     );
@@ -307,7 +309,7 @@ export class HomeComponent implements OnInit {
         .data(this.data.models)
         .join('path')
         .attr('id', (model) => model.id)
-        .attr('class', 'model')
+        .attr('class', 'scatterplotModel')
         .attr(
           'd',
           this.symbol
@@ -372,7 +374,7 @@ export class HomeComponent implements OnInit {
     );
 
     d3.select(`#scatterplotDots${id}`)
-      .selectAll('.model')
+      .selectAll('.scatterplotModel')
       .attr('d', this.symbol.size(50 / transform.k));
 
     d3.select(`#scatterplotClip${id}`)
@@ -602,7 +604,7 @@ export class HomeComponent implements OnInit {
         .data(this.data.models)
         .join('path')
         .attr('id', (model) => model.id)
-        .attr('class', 'model')
+        .attr('class', 'riskCurveModel')
         .attr(
           'd',
           this.symbol
@@ -717,7 +719,7 @@ export class HomeComponent implements OnInit {
     );
 
     d3.select(`#riskCurveDots${id}`)
-      .selectAll('.model')
+      .selectAll('.riskCurveModel')
       .attr('d', this.symbol.size(50 / transform.k));
 
     d3.select(`#riskCurveDots${id}`).attr(
@@ -728,7 +730,7 @@ export class HomeComponent implements OnInit {
     );
 
     d3.select(`#riskCurveDots${id}`)
-      .selectAll('.model')
+      .selectAll('.riskCurveModel')
       .attr('d', this.symbol.size(50 / transform.k));
 
     d3.select(`#riskCurveClip${id}`)
@@ -800,6 +802,7 @@ export class HomeComponent implements OnInit {
         .append('g')
         .attr('fill', 'darkblue')
         .append('rect')
+        .attr('class', 'barChart')
         .attr('x', x(0))
         .attr('width', (d: any) => x(d) - x(0))
         .attr('height', barHeight);
@@ -984,19 +987,15 @@ export class HomeComponent implements OnInit {
 
   public previousSolution() {
     if (this.selectedSolution > 0) {
-      this.selectedSolution--;
-      this.data = this.solutions[this.selectedSolution];
-    } else {
-      console.log('That is the first solution');
+      --this.selectedSolution;
+      this.updateSolutionData();
     }
   }
 
   public nextSolution() {
     if (this.selectedSolution < this.solutions.length - 1) {
-      this.selectedSolution++;
-      this.data = this.solutions[this.selectedSolution];
-    } else {
-      console.log('That is the last solution');
+      ++this.selectedSolution;
+      this.updateSolutionData();
     }
   }
 
@@ -1007,5 +1006,115 @@ export class HomeComponent implements OnInit {
       this.isDisabled = true;
       this.combinedRiskCurvesRendered = true;
     }
+  }
+
+  private updateSolutionData() {
+    this.data = this.solutions[this.selectedSolution];
+
+    this.rms = this.homeService.getRMs(this.data);
+
+    this.barChartAttributes = this.data.barChart.attributes;
+
+    this.attributesKeys = Object.keys(this.barChartAttributes);
+
+    this.pen = this.data.barChart.pen;
+    this.totalSum = this.data.barChart.totalSum;
+
+    // Create the X-axis band scale
+    const x = d3.scaleLinear().domain([0, 1]).range([0, 45]);
+
+    // Make the changes
+    this.clearSelection();
+
+    //scatterplot changes
+    this.scatterplotAxis.forEach((axis, axisIndex) => {
+      d3.select(`#scatterplotDots${axisIndex}`)
+        .selectAll('.scatterplotModel')
+        .data(this.data.models)
+        .attr(
+          'd',
+          this.symbol
+            .type((model) => {
+              if (model.predefined == true) {
+                return d3.symbolSquare;
+              } else if (model.rm == true) {
+                return d3.symbolDiamond;
+              } else {
+                return d3.symbolCircle;
+              }
+            })
+            .size(50)
+        )
+        .transition()
+        .duration(1000)
+        .attr(
+          'transform',
+          (model) => `translate(
+          ${this.scatterplotsX[axisIndex](
+            model.variables[axis[0]].value
+          )}, ${this.scatterplotsY[axisIndex](model.variables[axis[1]].value)})`
+        )
+        .attr('fill', (model) => {
+          if (model.predefined == true) {
+            return 'red';
+          } else if (model.rm == true) {
+            return 'green';
+          } else {
+            return '#a28ad2';
+          }
+        });
+    });
+
+    //risk curve changes
+    this.riskCurveAxis.forEach((axis, axisIndex) => {
+      d3.select(`#riskCurveDots${axisIndex}`)
+        .selectAll('.riskCurveModel')
+        .data(this.data.models)
+        .attr(
+          'd',
+          this.symbol
+            .type((model) => {
+              if (model.predefined == true) {
+                return d3.symbolSquare;
+              } else if (model.rm == true) {
+                return d3.symbolDiamond;
+              } else {
+                return d3.symbolCircle;
+              }
+            })
+            .size(50)
+        )
+        .transition()
+        .duration(1000)
+        .attr(
+          'transform',
+          (model) =>
+            `translate(${this.riskCurvesX[axisIndex](
+              model.variables[axis].value
+            )}, ${this.riskCurvesY[axisIndex](model.variables[axis].cprob)})`
+        )
+        .attr('fill', (model) => {
+          if (model.predefined == true) {
+            return 'red';
+          } else if (model.rm == true) {
+            return 'green';
+          } else {
+            return '#a28ad2';
+          }
+        });
+    });
+
+    //bar chart changes
+    console.log(this.barChartAttributes);
+    this.attributesKeys.map((data: any, index) => {
+      d3.select(`#attribute${index}`)
+        // .append('div')
+        // .selectAll('svg')
+        .selectAll(`.barChart`)
+        .data(this.barChartAttributes[data].difference)
+        .transition()
+        .duration(1000)
+        .attr('width', (d: any) => x(d) - x(0));
+    });
   }
 }
