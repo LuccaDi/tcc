@@ -11,10 +11,9 @@ import { HomeService } from '../../services/home.service';
   styleUrls: ['./expand-bar-chart.component.css'],
 })
 export class ExpandBarChartComponent implements OnInit {
-  private data = <Solution>{};
   private solutions: Solution[] = [];
-  private solution: any;
-  private barChart: any;
+  private selectedSolution: any;
+  private barChartData: any;
   private barChartAttributes: any;
 
   private attributesKeys: string[] = [];
@@ -28,10 +27,10 @@ export class ExpandBarChartComponent implements OnInit {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    this.solution = this.route.snapshot.params.solution;
-    this.solutions = await this.homeService.getData().toPromise();
+    this.selectedSolution = this.route.snapshot.params.solution;
+    this.solutions = await this.homeService.getSolutions().toPromise();
 
-    this.barChart = this.solutions[0].barChart;
+    this.barChartData = this.solutions[this.selectedSolution].barChart;
 
     this.showInfos();
     this.drawOriginalBarChart();
@@ -40,9 +39,9 @@ export class ExpandBarChartComponent implements OnInit {
   }
 
   private showInfos() {
-    this.pen = this.barChart.pen;
-    this.totalSum = this.barChart.totalSum;
-    this.barChartAttributes = this.barChart.attributes;
+    this.pen = this.barChartData.pen;
+    this.totalSum = this.barChartData.totalSum;
+    this.barChartAttributes = this.barChartData.attributes;
 
     this.attributesKeys = Object.keys(this.barChartAttributes);
 

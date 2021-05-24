@@ -23,6 +23,7 @@ export class ExpandChartComponent implements OnInit {
 
   private id: any;
   private chartType: string = '';
+  private selectedSolution: any;
 
   private marginAll = 30;
 
@@ -55,9 +56,12 @@ export class ExpandChartComponent implements OnInit {
     this.onResize();
     this.id = this.route.snapshot.params.id;
     this.chartType = this.route.snapshot.params.chart;
+    this.selectedSolution = this.route.snapshot.params.solution;
 
-    this.solutions = await this.homeService.getData().toPromise();
-    this.data = this.solutions[0];
+    console.log(this.selectedSolution);
+
+    this.solutions = await this.homeService.getSolutions().toPromise();
+    this.data = this.solutions[this.selectedSolution];
 
     this.scatterplotAxis = this.homeService.getScatterplotAxis(
       this.data.fcrossUsed

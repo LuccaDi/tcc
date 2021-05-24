@@ -11,11 +11,15 @@ import { HomeService } from '../../services/home.service';
   styleUrls: ['./home.component.css'],
 })
 export class HomeComponent implements OnInit {
-  private selectedSolution: number = 0;
+  public selectedSolution: number = 0;
   private data = <Solution>{};
-  private solutions: Solution[] = [];
+  public solutions: Solution[] = [];
   private scatterplotAxis: string[][] = [];
   private riskCurveAxis: string[] = [];
+
+  public combinedRiskCurvesRendered: boolean = false;
+
+  public isDisabled: boolean = false;
 
   private scatterplotsX: ScaleLinear<number, number, never>[] = [];
   private xAxis: any;
@@ -43,6 +47,9 @@ export class HomeComponent implements OnInit {
   private marginBottom = 10;
   private marginLeft = 35;
 
+  private features: string =
+    'width=900, height=650,menubar=yes,location=no,resizable=no,scrollbars=no,status=no';
+
   private size: number = 264;
 
   private height: number = this.size - this.marginTop - this.marginBottom;
@@ -56,11 +63,13 @@ export class HomeComponent implements OnInit {
   constructor(private homeService: HomeService, private router: Router) {}
 
   async ngOnInit(): Promise<void> {
-    this.solutions = await this.homeService.getData().toPromise();
+    this.solutions = await this.homeService.getSolutions().toPromise();
     this.data = this.solutions[this.selectedSolution];
+
     this.scatterplotAxis = this.homeService.getScatterplotAxis(
       this.data.fcrossUsed
     );
+
     this.riskCurveAxis = this.homeService.getRiskCurveAxis(
       this.data.models[0].variables
     );
@@ -81,8 +90,6 @@ export class HomeComponent implements OnInit {
     let divs;
     let svgs;
     let svgDiv;
-    let features: string =
-      'width=900, height=650,menubar=yes,location=no,resizable=no,scrollbars=no,status=no';
 
     // let chartWidth: any = document.getElementById(
     //   'divCrossPlotRiskCurve'
@@ -110,15 +117,10 @@ export class HomeComponent implements OnInit {
       .append('a')
       .style('cursor', 'pointer')
       .append('mat-icon')
-      .attr('class', 'material-icons')
-      .text('open_in_new')
-      .attr(
-        'onclick',
-        (d, i) =>
-          `window.open('${this.router.serializeUrl(
-            this.router.createUrlTree([`/expandChart`, `scatterplot`, `${i}`])
-          )}', '_blank', '${features}'); return false;`
-      );
+      .attr('class', 'material-icons scatterplotExpandButton')
+      .text('open_in_new');
+
+    this.updateExpandedButtonsURL();
 
     svgDiv = divs
       .append('div')
@@ -303,7 +305,7 @@ export class HomeComponent implements OnInit {
         .data(this.data.models)
         .join('path')
         .attr('id', (model) => model.id)
-        .attr('class', 'model')
+        .attr('class', 'scatterplotModel')
         .attr(
           'd',
           this.symbol
@@ -368,7 +370,7 @@ export class HomeComponent implements OnInit {
     );
 
     d3.select(`#scatterplotDots${id}`)
-      .selectAll('.model')
+      .selectAll('.scatterplotModel')
       .attr('d', this.symbol.size(50 / transform.k));
 
     d3.select(`#scatterplotClip${id}`)
@@ -400,8 +402,6 @@ export class HomeComponent implements OnInit {
     let divs;
     let svgs;
     let svgDiv;
-    let features: string =
-      'width=900, height=650,menubar=yes,location=no,resizable=no,scrollbars=no,status=no';
 
     divs = d3
       .select(`#riskCurves`)
@@ -419,15 +419,10 @@ export class HomeComponent implements OnInit {
       .append('a')
       .style('cursor', 'pointer')
       .append('mat-icon')
-      .attr('class', 'material-icons')
-      .text('open_in_new')
-      .attr(
-        'onclick',
-        (d, i) =>
-          `window.open('${this.router.serializeUrl(
-            this.router.createUrlTree([`/expandChart`, `riskCurve`, `${i}`])
-          )}', '_blank', '${features}'); return false;`
-      );
+      .attr('class', 'material-icons riskCurveExpandButton')
+      .text('open_in_new');
+
+    this.updateExpandedButtonsURL();
 
     svgDiv = divs
       .append('div')
@@ -442,8 +437,7 @@ export class HomeComponent implements OnInit {
       .style('align-self', 'center')
       .style('position', 'absolute')
       .append('p')
-      .style('margin-bottom', '55px')
-      .text('C. Probability');
+      .text('C. Prob');
 
     svgs = svgDiv
       .append('svg')
@@ -598,7 +592,7 @@ export class HomeComponent implements OnInit {
         .data(this.data.models)
         .join('path')
         .attr('id', (model) => model.id)
-        .attr('class', 'model')
+        .attr('class', 'riskCurveModel')
         .attr(
           'd',
           this.symbol
@@ -647,10 +641,13 @@ export class HomeComponent implements OnInit {
         //vertical lines
         d3.select(`#riskCurveDots${axisIndex}`)
           .append('line')
+          .attr('id', `verticalRiskCurveLines${rmIndex}`)
           .attr('class', 'riskCurveLines')
           .style('stroke', 'black') // colour the line
           .style('stroke-linejoin', 'round')
           .style('stroke-linecap', 'round')
+          .transition()
+          .duration(1000)
           .attr('x1', () => {
             return this.riskCurvesX[axisIndex](rm.variables[axis].value);
           }) // x position of the first end of the line
@@ -672,10 +669,13 @@ export class HomeComponent implements OnInit {
         previousRM = sortedRMs[rmIndex - 1];
         d3.select(`#riskCurveDots${axisIndex}`)
           .append('line')
+          .attr('id', `horizontalRiskCurveLines${rmIndex}`)
           .attr('class', 'riskCurveLines')
           .style('stroke', 'black') // colour the line
           .style('stroke-linejoin', 'round')
           .style('stroke-linecap', 'round')
+          .transition()
+          .duration(1000)
           .attr('x1', () => {
             return this.riskCurvesX[axisIndex](
               previousRM.variables[axis].value
@@ -713,7 +713,7 @@ export class HomeComponent implements OnInit {
     );
 
     d3.select(`#riskCurveDots${id}`)
-      .selectAll('.model')
+      .selectAll('.riskCurveModel')
       .attr('d', this.symbol.size(50 / transform.k));
 
     d3.select(`#riskCurveDots${id}`).attr(
@@ -724,7 +724,7 @@ export class HomeComponent implements OnInit {
     );
 
     d3.select(`#riskCurveDots${id}`)
-      .selectAll('.model')
+      .selectAll('.riskCurveModel')
       .attr('d', this.symbol.size(50 / transform.k));
 
     d3.select(`#riskCurveClip${id}`)
@@ -796,6 +796,7 @@ export class HomeComponent implements OnInit {
         .append('g')
         .attr('fill', 'darkblue')
         .append('rect')
+        .attr('class', 'barChart')
         .attr('x', x(0))
         .attr('width', (d: any) => x(d) - x(0))
         .attr('height', barHeight);
@@ -976,5 +977,177 @@ export class HomeComponent implements OnInit {
         .style('background-color', '')
         .style('border', 'solid medium grey');
     });
+  }
+
+  public previousSolution() {
+    if (this.selectedSolution > 0) {
+      --this.selectedSolution;
+      this.updateSolutionData();
+      this.updateExpandedButtonsURL();
+    }
+  }
+
+  public nextSolution() {
+    if (this.selectedSolution < this.solutions.length - 1) {
+      ++this.selectedSolution;
+      this.updateSolutionData();
+      this.updateExpandedButtonsURL();
+    }
+  }
+
+  public disableButtons(tabIndex: number) {
+    if (tabIndex == 0) {
+      this.isDisabled = false;
+    } else if (tabIndex == 1) {
+      this.isDisabled = true;
+      this.combinedRiskCurvesRendered = true;
+    }
+  }
+
+  private updateSolutionData() {
+    this.data = this.solutions[this.selectedSolution];
+
+    this.rms = this.homeService.getRMs(this.data);
+
+    this.barChartAttributes = this.data.barChart.attributes;
+
+    this.attributesKeys = Object.keys(this.barChartAttributes);
+
+    this.pen = this.data.barChart.pen;
+    this.totalSum = this.data.barChart.totalSum;
+
+    // Create the X-axis band scale
+    const x = d3.scaleLinear().domain([0, 1]).range([0, 45]);
+
+    // Make the changes
+    this.clearSelection();
+
+    //scatterplot changes
+    this.scatterplotAxis.forEach((axis, axisIndex) => {
+      d3.select(`#scatterplotDots${axisIndex}`)
+        .selectAll('.scatterplotModel')
+        .data(this.data.models)
+        .attr(
+          'd',
+          this.symbol
+            .type((model) => {
+              if (model.predefined == true) {
+                return d3.symbolSquare;
+              } else if (model.rm == true) {
+                return d3.symbolDiamond;
+              } else {
+                return d3.symbolCircle;
+              }
+            })
+            .size(50)
+        )
+        .transition()
+        .duration(1000)
+        .attr(
+          'transform',
+          (model) => `translate(
+          ${this.scatterplotsX[axisIndex](
+            model.variables[axis[0]].value
+          )}, ${this.scatterplotsY[axisIndex](model.variables[axis[1]].value)})`
+        )
+        .attr('fill', (model) => {
+          if (model.predefined == true) {
+            return 'red';
+          } else if (model.rm == true) {
+            return 'green';
+          } else {
+            return '#a28ad2';
+          }
+        });
+    });
+
+    //risk curve changes
+    this.riskCurveAxis.forEach((axis, axisIndex) => {
+      d3.select(`#riskCurveDots${axisIndex}`)
+        .selectAll('.riskCurveModel')
+        .data(this.data.models)
+        .attr(
+          'd',
+          this.symbol
+            .type((model) => {
+              if (model.predefined == true) {
+                return d3.symbolSquare;
+              } else if (model.rm == true) {
+                return d3.symbolDiamond;
+              } else {
+                return d3.symbolCircle;
+              }
+            })
+            .size(50)
+        )
+        .transition()
+        .duration(1000)
+        .attr(
+          'transform',
+          (model) =>
+            `translate(${this.riskCurvesX[axisIndex](
+              model.variables[axis].value
+            )}, ${this.riskCurvesY[axisIndex](model.variables[axis].cprob)})`
+        )
+        .attr('fill', (model) => {
+          if (model.predefined == true) {
+            return 'red';
+          } else if (model.rm == true) {
+            return 'green';
+          } else {
+            return '#a28ad2';
+          }
+        });
+    });
+
+    //risk curve lines changes
+    d3.selectAll('.riskCurveLines').remove();
+    this.drawRiskCurveLines();
+
+    //bar chart changes
+    this.attributesKeys.map((data: any, index) => {
+      d3.select(`#attribute${index}`)
+        // .append('div')
+        // .selectAll('svg')
+        .selectAll(`.barChart`)
+        .data(this.barChartAttributes[data].difference)
+        .transition()
+        .duration(1000)
+        .attr('width', (d: any) => x(d) - x(0));
+    });
+  }
+
+  private updateExpandedButtonsURL() {
+    //scatterplots
+    d3.selectAll(`.scatterplotExpandButton`)
+      .data(this.scatterplotAxis)
+      .attr(
+        'onclick',
+        (d, i) =>
+          `window.open('${this.router.serializeUrl(
+            this.router.createUrlTree([
+              `/expandChart`,
+              `scatterplot`,
+              `${this.selectedSolution}`,
+              `${i}`,
+            ])
+          )}', '_blank', '${this.features}'); return false;`
+      );
+
+    //risk curves
+    d3.selectAll(`.riskCurveExpandButton`)
+      .data(this.riskCurveAxis)
+      .attr(
+        'onclick',
+        (d, i) =>
+          `window.open('${this.router.serializeUrl(
+            this.router.createUrlTree([
+              `/expandChart`,
+              `riskCurve`,
+              `${this.selectedSolution}`,
+              `${i}`,
+            ])
+          )}', '_blank', '${this.features}'); return false;`
+      );
   }
 }
