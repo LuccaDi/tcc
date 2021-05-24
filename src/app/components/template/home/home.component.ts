@@ -47,6 +47,9 @@ export class HomeComponent implements OnInit {
   private marginBottom = 10;
   private marginLeft = 35;
 
+  private features: string =
+    'width=900, height=650,menubar=yes,location=no,resizable=no,scrollbars=no,status=no';
+
   private size: number = 264;
 
   private height: number = this.size - this.marginTop - this.marginBottom;
@@ -87,8 +90,6 @@ export class HomeComponent implements OnInit {
     let divs;
     let svgs;
     let svgDiv;
-    let features: string =
-      'width=900, height=650,menubar=yes,location=no,resizable=no,scrollbars=no,status=no';
 
     // let chartWidth: any = document.getElementById(
     //   'divCrossPlotRiskCurve'
@@ -116,15 +117,10 @@ export class HomeComponent implements OnInit {
       .append('a')
       .style('cursor', 'pointer')
       .append('mat-icon')
-      .attr('class', 'material-icons')
-      .text('open_in_new')
-      .attr(
-        'onclick',
-        (d, i) =>
-          `window.open('${this.router.serializeUrl(
-            this.router.createUrlTree([`/expandChart`, `scatterplot`, `${i}`])
-          )}', '_blank', '${features}'); return false;`
-      );
+      .attr('class', 'material-icons scatterplotExpandButton')
+      .text('open_in_new');
+
+    this.updateExpandedButtonsURL();
 
     svgDiv = divs
       .append('div')
@@ -406,8 +402,6 @@ export class HomeComponent implements OnInit {
     let divs;
     let svgs;
     let svgDiv;
-    let features: string =
-      'width=900, height=650,menubar=yes,location=no,resizable=no,scrollbars=no,status=no';
 
     divs = d3
       .select(`#riskCurves`)
@@ -425,15 +419,10 @@ export class HomeComponent implements OnInit {
       .append('a')
       .style('cursor', 'pointer')
       .append('mat-icon')
-      .attr('class', 'material-icons')
-      .text('open_in_new')
-      .attr(
-        'onclick',
-        (d, i) =>
-          `window.open('${this.router.serializeUrl(
-            this.router.createUrlTree([`/expandChart`, `riskCurve`, `${i}`])
-          )}', '_blank', '${features}'); return false;`
-      );
+      .attr('class', 'material-icons riskCurveExpandButton')
+      .text('open_in_new');
+
+    this.updateExpandedButtonsURL();
 
     svgDiv = divs
       .append('div')
@@ -994,6 +983,7 @@ export class HomeComponent implements OnInit {
     if (this.selectedSolution > 0) {
       --this.selectedSolution;
       this.updateSolutionData();
+      this.updateExpandedButtonsURL();
     }
   }
 
@@ -1001,6 +991,7 @@ export class HomeComponent implements OnInit {
     if (this.selectedSolution < this.solutions.length - 1) {
       ++this.selectedSolution;
       this.updateSolutionData();
+      this.updateExpandedButtonsURL();
     }
   }
 
@@ -1124,5 +1115,39 @@ export class HomeComponent implements OnInit {
         .duration(1000)
         .attr('width', (d: any) => x(d) - x(0));
     });
+  }
+
+  private updateExpandedButtonsURL() {
+    //scatterplots
+    d3.selectAll(`.scatterplotExpandButton`)
+      .data(this.scatterplotAxis)
+      .attr(
+        'onclick',
+        (d, i) =>
+          `window.open('${this.router.serializeUrl(
+            this.router.createUrlTree([
+              `/expandChart`,
+              `scatterplot`,
+              `${this.selectedSolution}`,
+              `${i}`,
+            ])
+          )}', '_blank', '${this.features}'); return false;`
+      );
+
+    //risk curves
+    d3.selectAll(`.riskCurveExpandButton`)
+      .data(this.riskCurveAxis)
+      .attr(
+        'onclick',
+        (d, i) =>
+          `window.open('${this.router.serializeUrl(
+            this.router.createUrlTree([
+              `/expandChart`,
+              `riskCurve`,
+              `${this.selectedSolution}`,
+              `${i}`,
+            ])
+          )}', '_blank', '${this.features}'); return false;`
+      );
   }
 }
