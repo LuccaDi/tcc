@@ -5,7 +5,7 @@
 
     <mat-form-field class="solutionButtons">
       <mat-label>Solution</mat-label>
-      <mat-select [(value)]="selectedSolution" [disabled]="isDisabled">
+      <mat-select [(value)]="selectedSolution" [disabled]="isDisabled" (selectionChange)="updateSolutionData()">
         <mat-option *ngFor="let solution of solutions; let i = index" [value]="i">
           Solution {{i + 1}}
         </mat-option>

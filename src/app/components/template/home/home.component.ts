@@ -1004,7 +1004,7 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  private updateSolutionData() {
+  public updateSolutionData() {
     this.data = this.solutions[this.selectedSolution];
 
     this.rms = this.homeService.getRMs(this.data);
