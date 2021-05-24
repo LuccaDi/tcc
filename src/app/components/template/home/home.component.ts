@@ -448,8 +448,7 @@ export class HomeComponent implements OnInit {
       .style('align-self', 'center')
       .style('position', 'absolute')
       .append('p')
-      .style('margin-bottom', '55px')
-      .text('C. Probability');
+      .text('C. Prob');
 
     svgs = svgDiv
       .append('svg')
@@ -653,10 +652,13 @@ export class HomeComponent implements OnInit {
         //vertical lines
         d3.select(`#riskCurveDots${axisIndex}`)
           .append('line')
+          .attr('id', `verticalRiskCurveLines${rmIndex}`)
           .attr('class', 'riskCurveLines')
           .style('stroke', 'black') // colour the line
           .style('stroke-linejoin', 'round')
           .style('stroke-linecap', 'round')
+          .transition()
+          .duration(1000)
           .attr('x1', () => {
             return this.riskCurvesX[axisIndex](rm.variables[axis].value);
           }) // x position of the first end of the line
@@ -678,10 +680,13 @@ export class HomeComponent implements OnInit {
         previousRM = sortedRMs[rmIndex - 1];
         d3.select(`#riskCurveDots${axisIndex}`)
           .append('line')
+          .attr('id', `horizontalRiskCurveLines${rmIndex}`)
           .attr('class', 'riskCurveLines')
           .style('stroke', 'black') // colour the line
           .style('stroke-linejoin', 'round')
           .style('stroke-linecap', 'round')
+          .transition()
+          .duration(1000)
           .attr('x1', () => {
             return this.riskCurvesX[axisIndex](
               previousRM.variables[axis].value
@@ -1104,8 +1109,11 @@ export class HomeComponent implements OnInit {
         });
     });
 
+    //risk curve lines changes
+    d3.selectAll('.riskCurveLines').remove();
+    this.drawRiskCurveLines();
+
     //bar chart changes
-    console.log(this.barChartAttributes);
     this.attributesKeys.map((data: any, index) => {
       d3.select(`#attribute${index}`)
         // .append('div')
