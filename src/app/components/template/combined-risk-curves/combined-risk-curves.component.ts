@@ -117,8 +117,8 @@ export class CombinedRiskCurvesComponent implements OnInit {
       .style('align-self', 'center')
       .style('position', 'absolute')
       .append('p')
-      .style('margin-bottom', '55px')
-      .text('C. Probability');
+      // .style('margin-bottom', '55px')
+      .text('C. Prob');
 
     svgs = svgDiv
       .append('svg')
@@ -269,10 +269,12 @@ export class CombinedRiskCurvesComponent implements OnInit {
   }
 
   private addRiskCurvesDots() {
-    this.solutions.forEach((solution) => {
-      this.solutionsModels = solution.models;
+    let tempSolutionModels;
 
-      this.solutionsModels = this.solutionsModels.concat(this.solutionsModels);
+    this.solutions.forEach((solution) => {
+      tempSolutionModels = solution.models;
+
+      this.solutionsModels = this.solutionsModels.concat(tempSolutionModels);
     });
 
     this.riskCurveAxis.forEach((axis, axisIndex) => {
