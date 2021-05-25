@@ -1,7 +1,7 @@
 <app-header></app-header>
 <figure id="home">
 
-  <div>
+  <div id="header">
 
     <mat-form-field class="solutionButtons">
       <mat-label>Solution</mat-label>
@@ -26,6 +26,10 @@
       <!-- <mat-icon>brush</mat-icon> -->
       Clear Selection
     </button>
+
+    <svg id="subtitle">
+
+    </svg>
   </div>
 
   <mat-tab-group dynamicHeight (selectedIndexChange)="disableButtons($event)">

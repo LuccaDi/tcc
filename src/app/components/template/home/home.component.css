@@ -2,14 +2,24 @@
   margin: 14px 20px;
 }
 
+#header {
+  align-items: flex-start;
+}
+
 .solutionButtons {
   margin-top: 20px;
   margin-right: 20px;
 }
 
+#subtitle {
+  height: 70px;
+  margin-left: auto;
+}
+
 #charts,
 #scatterplots,
-#riskCurves {
+#riskCurves,
+#header {
   display: flex;
   flex-direction: row;
 }

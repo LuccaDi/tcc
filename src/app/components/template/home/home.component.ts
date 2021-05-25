@@ -89,6 +89,7 @@ export class HomeComponent implements OnInit {
     this.drawRiskCurves();
     this.drawBarChart();
     this.colorCharts();
+    this.addSubtitle();
   }
 
   //Scatterplots
@@ -1155,5 +1156,30 @@ export class HomeComponent implements OnInit {
             ])
           )}', '_blank', '${this.features}'); return false;`
       );
+  }
+
+  private addSubtitle() {
+    let subtitle = d3.select('#subtitle');
+
+    let subtitles = ['Predefined RM', 'RM', 'Other Models'];
+    let simbols = [this.predefinedSymbol, this.rmSymbol, this.modelSymbol];
+    let colors = [this.predefinedColor, this.rmColor, this.modelColor];
+
+    subtitle
+      .selectAll('path')
+      .data(simbols)
+      .join('path')
+      .attr('d', this.symbol.type((d) => d).size(100))
+      .attr('fill', (d, i) => colors[i])
+      .attr('transform', (d, i) => `translate(${40}, ${(i + 1) * 20})`);
+
+    subtitle
+      .selectAll('text')
+      .data(subtitles)
+      .join('text')
+      .text((d) => d)
+      .style('fill', (d, i) => colors[i])
+      .attr('transform', (d, i) => `translate(${50}, ${(i + 1) * 20})`)
+      .style('alignment-baseline', 'middle');
   }
 }
