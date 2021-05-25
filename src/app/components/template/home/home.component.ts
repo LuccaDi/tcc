@@ -58,6 +58,12 @@ export class HomeComponent implements OnInit {
   private symbol = d3.symbol();
 
   private chartColor = '#d3d3d3';
+  private predefinedColor = 'green';
+  private rmColor = 'orange';
+  private modelColor = '#a28ad2';
+  private predefinedSymbol = d3.symbolDiamond;
+  private rmSymbol = d3.symbolStar;
+  private modelSymbol = d3.symbolCircle;
   // private chartColor = 'red';
 
   constructor(private homeService: HomeService, private router: Router) {}
@@ -311,11 +317,11 @@ export class HomeComponent implements OnInit {
           this.symbol
             .type((model) => {
               if (model.predefined == true) {
-                return d3.symbolSquare;
+                return this.predefinedSymbol;
               } else if (model.rm == true) {
-                return d3.symbolDiamond;
+                return this.rmSymbol;
               } else {
-                return d3.symbolCircle;
+                return this.modelSymbol;
               }
             })
             .size(50)
@@ -331,11 +337,11 @@ export class HomeComponent implements OnInit {
         )
         .attr('fill', (model) => {
           if (model.predefined == true) {
-            return 'red';
+            return this.predefinedColor;
           } else if (model.rm == true) {
-            return 'green';
+            return this.rmColor;
           } else {
-            return '#a28ad2';
+            return this.modelColor;
           }
         })
         .on('click', (modelClicked) => {
@@ -598,11 +604,11 @@ export class HomeComponent implements OnInit {
           this.symbol
             .type((model) => {
               if (model.predefined == true) {
-                return d3.symbolSquare;
+                return this.predefinedSymbol;
               } else if (model.rm == true) {
-                return d3.symbolDiamond;
+                return this.rmSymbol;
               } else {
-                return d3.symbolCircle;
+                return this.modelSymbol;
               }
             })
             .size(50)
@@ -616,11 +622,11 @@ export class HomeComponent implements OnInit {
         )
         .attr('fill', (model) => {
           if (model.predefined == true) {
-            return 'red';
+            return this.predefinedColor;
           } else if (model.rm == true) {
-            return 'green';
+            return this.rmColor;
           } else {
-            return '#a28ad2';
+            return this.modelColor;
           }
         })
         .on('click', (modelClicked) => {
@@ -1032,11 +1038,11 @@ export class HomeComponent implements OnInit {
           this.symbol
             .type((model) => {
               if (model.predefined == true) {
-                return d3.symbolSquare;
+                return this.predefinedSymbol;
               } else if (model.rm == true) {
-                return d3.symbolDiamond;
+                return this.rmSymbol;
               } else {
-                return d3.symbolCircle;
+                return this.modelSymbol;
               }
             })
             .size(50)
@@ -1052,11 +1058,11 @@ export class HomeComponent implements OnInit {
         )
         .attr('fill', (model) => {
           if (model.predefined == true) {
-            return 'red';
+            return this.predefinedColor;
           } else if (model.rm == true) {
-            return 'green';
+            return this.rmColor;
           } else {
-            return '#a28ad2';
+            return this.modelColor;
           }
         });
     });
@@ -1071,11 +1077,11 @@ export class HomeComponent implements OnInit {
           this.symbol
             .type((model) => {
               if (model.predefined == true) {
-                return d3.symbolSquare;
+                return this.predefinedSymbol;
               } else if (model.rm == true) {
-                return d3.symbolDiamond;
+                return this.rmSymbol;
               } else {
-                return d3.symbolCircle;
+                return this.modelSymbol;
               }
             })
             .size(50)
@@ -1091,11 +1097,11 @@ export class HomeComponent implements OnInit {
         )
         .attr('fill', (model) => {
           if (model.predefined == true) {
-            return 'red';
+            return this.predefinedColor;
           } else if (model.rm == true) {
-            return 'green';
+            return this.rmColor;
           } else {
-            return '#a28ad2';
+            return this.modelColor;
           }
         });
     });

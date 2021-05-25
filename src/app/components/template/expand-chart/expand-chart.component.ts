@@ -43,6 +43,12 @@ export class ExpandChartComponent implements OnInit {
   private yAxis: any;
 
   private chartColor = '#d3d3d3';
+  private predefinedColor = 'green';
+  private rmColor = 'orange';
+  private modelColor = '#a28ad2';
+  private predefinedSymbol = d3.symbolDiamond;
+  private rmSymbol = d3.symbolStar;
+  private modelSymbol = d3.symbolCircle;
 
   expandedChartWidth = 0;
   expandedChartHeight = 0;
@@ -231,11 +237,11 @@ export class ExpandChartComponent implements OnInit {
         this.symbol
           .type((d: any) => {
             if (d.predefined == true) {
-              return d3.symbolSquare;
+              return this.predefinedSymbol;
             } else if (d.rm == true) {
-              return d3.symbolDiamond;
+              return this.rmSymbol;
             } else {
-              return d3.symbolCircle;
+              return this.modelSymbol;
             }
           })
           .size(50)
@@ -261,11 +267,11 @@ export class ExpandChartComponent implements OnInit {
       })
       .attr('fill', (d: any) => {
         if (d.predefined == true) {
-          return 'red';
+          return this.predefinedColor;
         } else if (d.rm == true) {
-          return 'green';
+          return this.rmColor;
         } else {
-          return '#a28ad2';
+          return this.modelColor;
         }
       })
       .on('click', (d: any) => {
