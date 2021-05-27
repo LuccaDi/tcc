@@ -378,7 +378,7 @@ export class HomeComponent implements OnInit {
 
     d3.select(`#scatterplotDots${id}`)
       .selectAll('.scatterplotModel')
-      .attr('d', this.symbol.size(50 / transform.k));
+      .attr('d', d3.symbol().size(50 / transform.k));
 
     d3.select(`#scatterplotClip${id}`)
       .select('rect')
@@ -719,10 +719,6 @@ export class HomeComponent implements OnInit {
       this.yAxis.tickSize(-this.width)
     );
 
-    d3.select(`#riskCurveDots${id}`)
-      .selectAll('.riskCurveModel')
-      .attr('d', this.symbol.size(50 / transform.k));
-
     d3.select(`#riskCurveDots${id}`).attr(
       'transform',
       `translate(${transform.x}, ${transform.y - this.marginTop}) scale(${
@@ -732,7 +728,7 @@ export class HomeComponent implements OnInit {
 
     d3.select(`#riskCurveDots${id}`)
       .selectAll('.riskCurveModel')
-      .attr('d', this.symbol.size(50 / transform.k));
+      .attr('d', d3.symbol().size(50 / transform.k));
 
     d3.select(`#riskCurveClip${id}`)
       .select('rect')
