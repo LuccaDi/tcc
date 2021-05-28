@@ -173,13 +173,14 @@ export class CombinedRiskCurvesComponent implements OnInit {
   }
 
   private addRiskCurveX() {
-    let domain: number[];
+    let domain: any[];
     let extentDomain: any;
 
     this.riskCurveAxis.forEach((varAxis, i) => {
       this.solutions.forEach((solution) => {
-        domain = solution.models.map((d) => {
-          return d.variables[varAxis].value;
+        domain = solution.models.map((model) => {
+          return model.variables.find((variable) => variable.name == varAxis)
+            ?.value;
         });
 
         domain = domain.concat(domain);
@@ -306,13 +307,19 @@ export class CombinedRiskCurvesComponent implements OnInit {
             })
             .size(50)
         )
-        .attr(
-          'transform',
-          (model: any) =>
-            `translate(${this.riskCurvesX[axisIndex](
-              model.variables[axis].value
-            )}, ${this.riskCurvesY[axisIndex](model.variables[axis].cprob)})`
-        )
+        .attr('transform', (model: any) => {
+          let valueX: any = model.variables.find(
+            (variable: any) => variable.name == axis
+          )?.value;
+          let valueY: any = model.variables.find(
+            (variable: any) => variable.name == axis
+          )?.cprob;
+
+          return `translate(
+            ${this.riskCurvesX[axisIndex](valueX)}, ${this.riskCurvesY[
+            axisIndex
+          ](valueY)})`;
+        })
         .attr('fill', (model: any) => {
           if (model.predefined == true) {
             return this.predefinedColor;
@@ -345,13 +352,17 @@ export class CombinedRiskCurvesComponent implements OnInit {
           .style('stroke-linejoin', 'round')
           .style('stroke-linecap', 'round')
           .attr('x1', () => {
-            return this.riskCurvesX[axisIndex](rm.variables[axis].value);
+            return this.riskCurvesX[axisIndex](
+              rm.variables.find((variable: any) => variable.name == axis)?.value
+            );
           }) // x position of the first end of the line
           .attr('y1', () => {
             return this.riskCurvesY[axisIndex](cumulativeProb);
           }) // y position of the first end of the line
           .attr('x2', () => {
-            return this.riskCurvesX[axisIndex](rm.variables[axis].value);
+            return this.riskCurvesX[axisIndex](
+              rm.variables.find((variable: any) => variable.name == axis)?.value
+            );
           }) // x position of the second end of the line
           .attr('y2', () => {
             cumulativeProb -= rm.cprobRM;
@@ -371,14 +382,18 @@ export class CombinedRiskCurvesComponent implements OnInit {
           .style('stroke-linecap', 'round')
           .attr('x1', () => {
             return this.riskCurvesX[axisIndex](
-              previousRM.variables[axis].value
+              previousRM.variables.find(
+                (variable: any) => variable.name == axis
+              )?.value
             );
           }) // x position of the first end of the line
           .attr('y1', () => {
             return this.riskCurvesY[axisIndex](cumulativeProb + rm.cprobRM);
           }) // y position of the first end of the line
           .attr('x2', () => {
-            return this.riskCurvesX[axisIndex](rm.variables[axis].value);
+            return this.riskCurvesX[axisIndex](
+              rm.variables.find((variable: any) => variable.name == axis)?.value
+            );
           }) // x position of the second end of the line
           .attr('y2', () => {
             return this.riskCurvesY[axisIndex](cumulativeProb + rm.cprobRM);
@@ -468,7 +483,10 @@ export class CombinedRiskCurvesComponent implements OnInit {
             .style('stroke-linejoin', 'round')
             .style('stroke-linecap', 'round')
             .attr('x1', () =>
-              this.riskCurvesX[axisIndex](model.variables[axis].value)
+              this.riskCurvesX[axisIndex](
+                model.variables.find((variable: any) => variable.name == axis)
+                  ?.value
+              )
             ) // x position of the first end of the line
             .attr('y1', () =>
               this.riskCurvesY[axisIndex](
@@ -476,7 +494,10 @@ export class CombinedRiskCurvesComponent implements OnInit {
               )
             ) // y position of the first end of the line
             .attr('x2', () =>
-              this.riskCurvesX[axisIndex](model.variables[axis].value)
+              this.riskCurvesX[axisIndex](
+                model.variables.find((variable: any) => variable.name == axis)
+                  ?.value
+              )
             ) // x position of the second end of the line
             .attr('y2', () =>
               this.riskCurvesY[axisIndex](
@@ -499,7 +520,10 @@ export class CombinedRiskCurvesComponent implements OnInit {
               )
             ) // x position of the first end of the line
             .attr('y1', () =>
-              this.riskCurvesY[axisIndex](model.variables[axis].cprob)
+              this.riskCurvesY[axisIndex](
+                model.variables.find((variable: any) => variable.name == axis)
+                  ?.cprob
+              )
             ) // y position of the first end of the line
             .attr('x2', () =>
               this.riskCurvesX[axisIndex](
@@ -507,7 +531,10 @@ export class CombinedRiskCurvesComponent implements OnInit {
               )
             ) // x position of the second end of the line
             .attr('y2', () =>
-              this.riskCurvesY[axisIndex](model.variables[axis].cprob)
+              this.riskCurvesY[axisIndex](
+                model.variables.find((variable: any) => variable.name == axis)
+                  ?.cprob
+              )
             ); // y position of the second end of the line
         });
       }

@@ -4,13 +4,12 @@ export interface Solution {
     pen: number;
     totalSum: number;
     attributes: {
-      [key: string]: {
-        original: number[];
-        rmFinder: number[];
-        difference: number[];
-        sum: number;
-      };
-    };
+      name: string;
+      original: number[];
+      rmFinder: number[];
+      difference: number[];
+      sum: number;
+    }[];
   };
   models: {
     predefined: boolean;
@@ -18,14 +17,14 @@ export interface Solution {
     id: number;
     cprobRM?: number;
     attributes: {
-      [key: string]: number;
-    };
+      name: string;
+      value: number;
+    }[];
     variables: {
-      [key: string]: {
-        value: number;
-        cprob: number;
-      };
-    };
+      name: string;
+      value: number;
+      cprob: number;
+    }[];
   }[];
 }
 
