@@ -61,8 +61,8 @@ export class CombinedRiskCurvesComponent implements OnInit {
     let divs;
     let svgs;
     let svgDiv;
-    // let features: string =
-    //   'width=900, height=650,menubar=yes,location=no,resizable=no,scrollbars=no,status=no';
+    let features: string =
+      'width=900, height=650,menubar=yes,location=no,resizable=no,scrollbars=no,status=no';
 
     // console.log(d3.select(`#combinedRiskCurves`));
 
@@ -84,19 +84,24 @@ export class CombinedRiskCurvesComponent implements OnInit {
       .style('flex-direction', 'column')
       .style('align-items', 'flex-end');
 
-    // divs
-    //   .append('a')
-    //   .style('cursor', 'pointer')
-    //   .append('mat-icon')
-    //   .attr('class', 'material-icons')
-    //   .text('open_in_new')
-    //   .attr(
-    //     'onclick',
-    //     (d, i) =>
-    //       `window.open('${this.router.serializeUrl(
-    //         this.router.createUrlTree([`/expandChart`, `riskCurve`, `${i}`])
-    //       )}', '_blank', '${features}'); return false;`
-    //   );
+    divs
+      .append('a')
+      .style('cursor', 'pointer')
+      .append('mat-icon')
+      .attr('class', 'material-icons')
+      .text('open_in_new')
+      .attr(
+        'onclick',
+        (d, i) =>
+          `window.open('${this.router.serializeUrl(
+            this.router.createUrlTree([
+              `/expandChart`,
+              `combinedRiskCurve`,
+              -1,
+              `${i}`,
+            ])
+          )}', '_blank', '${features}'); return false;`
+      );
 
     svgDiv = divs
       .append('div')

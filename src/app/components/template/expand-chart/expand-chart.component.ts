@@ -17,6 +17,7 @@ export class ExpandChartComponent implements OnInit {
   private rms: any;
   private data = <Solution>{};
   private solutions: Solution[] = [];
+  private combinedRiskCurveData: Object[] = [];
 
   // private data: Solution[] = [];
   // private rms: newChart[] = [];
@@ -65,25 +66,43 @@ export class ExpandChartComponent implements OnInit {
     this.selectedSolution = this.route.snapshot.params.solution;
 
     this.solutions = await this.homeService.getSolutions().toPromise();
-    this.data = this.solutions[this.selectedSolution];
 
-    this.scatterplotAxis = this.homeService.getScatterplotAxis(
-      this.data.fcrossUsed
-    );
-    this.riskCurveAxis = this.homeService.getRiskCurveAxis(
-      this.data.models[0].variables
-    );
+    if (this.selectedSolution >= 0) {
+      this.data = this.solutions[this.selectedSolution];
+
+      this.scatterplotAxis = this.homeService.getScatterplotAxis(
+        this.data.fcrossUsed
+      );
+      this.riskCurveAxis = this.homeService.getRiskCurveAxis(
+        this.data.models[0].variables
+      );
+
+      this.rms = this.homeService.getRMs(this.data);
+    } else {
+      let tempSolutionModels;
+
+      this.solutions.forEach((solution) => {
+        tempSolutionModels = solution.models;
+
+        this.combinedRiskCurveData =
+          this.combinedRiskCurveData.concat(tempSolutionModels);
+      });
+
+      this.riskCurveAxis = this.homeService.getRiskCurveAxis(
+        this.solutions[0].models[0].variables
+      );
+    }
 
     // this.data = await this.homeService.getData().toPromise();
     // this.rms = await this.homeService.getRMs();
-
-    this.rms = this.homeService.getRMs(this.data);
 
     this.drawPlot();
     this.addDots();
     this.colorChart();
     if (this.chartType == 'riskCurve') {
       this.drawRiskCurveLines();
+    } else if (this.chartType == 'combinedRiskCurve') {
+      this.drawCombinedRiskCurveLines();
     }
   }
 
@@ -127,11 +146,21 @@ export class ExpandChartComponent implements OnInit {
           (variable) => variable.name == this.scatterplotAxis[this.id][0]
         )?.value;
       });
-    } else {
+    } else if (this.chartType == 'riskCurve') {
       domain = this.data.models.map((model) => {
         return model.variables.find(
           (variable) => variable.name == this.riskCurveAxis[this.id]
         )?.value;
+      });
+    } else {
+      this.solutions.forEach((solution) => {
+        domain = solution.models.map((model) => {
+          return model.variables.find(
+            (variable) => variable.name == this.riskCurveAxis[this.id]
+          )?.value;
+        });
+
+        domain = domain.concat(domain);
       });
     }
 
@@ -233,7 +262,12 @@ export class ExpandChartComponent implements OnInit {
       .attr('id', () => 'chart')
       .attr('clip-path', () => `url(#clip)`)
       .selectAll('path')
-      .data(this.data.models)
+      // .data(this.data.models)
+      .data(
+        this.chartType == 'combinedRiskCurve'
+          ? this.combinedRiskCurveData
+          : this.data.models
+      )
       .join('path')
       .attr('id', (d: any) => d.id)
       .attr('class', 'dot')
@@ -251,19 +285,21 @@ export class ExpandChartComponent implements OnInit {
           })
           .size(50)
       )
-      .attr('transform', (model) => {
+      .attr('transform', (model: any) => {
         if (this.chartType == 'scatterplot') {
           return (
             'translate(' +
             this.x(
               model.variables.find(
-                (variable) => variable.name == this.scatterplotAxis[this.id][0]
+                (variable: any) =>
+                  variable.name == this.scatterplotAxis[this.id][0]
               )?.value
             ) +
             ',' +
             this.y(
               model.variables.find(
-                (variable) => variable.name == this.scatterplotAxis[this.id][1]
+                (variable: any) =>
+                  variable.name == this.scatterplotAxis[this.id][1]
               )?.value
             ) +
             ')'
@@ -273,13 +309,13 @@ export class ExpandChartComponent implements OnInit {
             'translate(' +
             this.x(
               model.variables.find(
-                (variable) => variable.name == this.riskCurveAxis[this.id]
+                (variable: any) => variable.name == this.riskCurveAxis[this.id]
               )?.value
             ) +
             ',' +
             this.y(
               model.variables.find(
-                (variable) => variable.name == this.riskCurveAxis[this.id]
+                (variable: any) => variable.name == this.riskCurveAxis[this.id]
               )?.cprob
             ) +
             ')'
@@ -298,7 +334,12 @@ export class ExpandChartComponent implements OnInit {
       .on('click', (d: any) => {
         let dotId = d.srcElement.attributes.id.value;
 
-        this.data.models.map((data: any) => {
+        let iterator =
+          this.chartType == 'combinedRiskCurve'
+            ? this.combinedRiskCurveData
+            : this.data.models;
+
+        iterator.forEach((data: any) => {
           if (data.id == dotId) {
             d3.select('#chart').selectAll('.brushing').remove();
 
@@ -621,6 +662,83 @@ export class ExpandChartComponent implements OnInit {
         .attr('y2', () => {
           return this.y(cumulativeProb + rm.cprobRM);
         }); // y position of the second end of the line
+    });
+  }
+
+  private drawCombinedRiskCurveLines() {
+    let sortedRMs: Object[];
+    let lineX: any;
+
+    this.solutions.forEach((solution) => {
+      this.rms = this.homeService.getRMs(solution);
+
+      let cumulativeProb: number = 1;
+      let previousRM: any;
+      sortedRMs = this.homeService.sortRMBy(
+        this.rms,
+        this.riskCurveAxis[this.id]
+      );
+      lineX = this.riskCurveAxis[this.id];
+
+      sortedRMs.map((rm: any, index: number) => {
+        //vertical lines
+        d3.select(`#chart`)
+          .append('line')
+          .attr('class', 'riskCurveLines')
+          .style('stroke', 'black') // colour the line
+          .style('stroke-linejoin', 'round')
+          .style('stroke-linecap', 'round')
+          .attr('x1', () => {
+            return this.x(
+              rm.variables.find((variable: any) => variable.name == lineX)
+                ?.value
+            );
+          }) // x position of the first end of the line
+          .attr('y1', () => {
+            return this.y(cumulativeProb);
+          }) // y position of the first end of the line
+          .attr('x2', () => {
+            return this.x(
+              rm.variables.find((variable: any) => variable.name == lineX)
+                ?.value
+            );
+          }) // x position of the second end of the line
+          .attr('y2', () => {
+            cumulativeProb -= rm.cprobRM;
+            return this.y(cumulativeProb);
+          }); // y position of the second end of the line
+
+        //horizontal lines
+        if (index == 0) {
+          return;
+        }
+        previousRM = sortedRMs[index - 1];
+        d3.select(`#chart`)
+          .append('line')
+          .attr('class', 'riskCurveLines')
+          .style('stroke', 'black') // colour the line
+          .style('stroke-linejoin', 'round')
+          .style('stroke-linecap', 'round')
+          .attr('x1', () => {
+            return this.x(
+              previousRM.variables.find(
+                (variable: any) => variable.name == lineX
+              )?.value
+            );
+          }) // x position of the first end of the line
+          .attr('y1', () => {
+            return this.y(cumulativeProb + rm.cprobRM);
+          }) // y position of the first end of the line
+          .attr('x2', () => {
+            return this.x(
+              rm.variables.find((variable: any) => variable.name == lineX)
+                ?.value
+            );
+          }) // x position of the second end of the line
+          .attr('y2', () => {
+            return this.y(cumulativeProb + rm.cprobRM);
+          }); // y position of the second end of the line
+      });
     });
   }
 }
