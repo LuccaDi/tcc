@@ -53,20 +53,8 @@ export class CombinedRiskCurvesComponent implements OnInit {
       this.solutions[0].models[0].variables
     );
 
-    this.getAllSolutionsRMs();
-
     this.drawRiskCurves();
     this.colorCharts();
-  }
-
-  private getAllSolutionsRMs() {
-    let tempRMs: Object[] = [];
-
-    this.solutions.forEach((solution) => {
-      tempRMs = this.homeService.getRMs(solution);
-
-      this.rms = this.rms.concat(tempRMs);
-    });
   }
 
   private drawRiskCurves() {
@@ -338,66 +326,73 @@ export class CombinedRiskCurvesComponent implements OnInit {
   private drawRiskCurveLines() {
     let sortedRMs: Object[];
 
-    this.riskCurveAxis.forEach((axis, axisIndex) => {
-      let cumulativeProb: number = 1;
-      let previousRM: any;
-      sortedRMs = this.homeService.sortRMBy(this.rms, axis);
+    this.solutions.forEach((solution) => {
+      this.rms = this.homeService.getRMs(solution);
 
-      sortedRMs.forEach((rm: any, rmIndex) => {
-        //vertical lines
-        d3.select(`#riskCurveDots${axisIndex}`)
-          .append('line')
-          .attr('class', 'riskCurveLines')
-          .style('stroke', 'black') // colour the line
-          .style('stroke-linejoin', 'round')
-          .style('stroke-linecap', 'round')
-          .attr('x1', () => {
-            return this.riskCurvesX[axisIndex](
-              rm.variables.find((variable: any) => variable.name == axis)?.value
-            );
-          }) // x position of the first end of the line
-          .attr('y1', () => {
-            return this.riskCurvesY[axisIndex](cumulativeProb);
-          }) // y position of the first end of the line
-          .attr('x2', () => {
-            return this.riskCurvesX[axisIndex](
-              rm.variables.find((variable: any) => variable.name == axis)?.value
-            );
-          }) // x position of the second end of the line
-          .attr('y2', () => {
-            cumulativeProb -= rm.cprobRM;
-            return this.riskCurvesY[axisIndex](cumulativeProb);
-          }); // y position of the second end of the line
+      this.riskCurveAxis.forEach((axis, axisIndex) => {
+        let cumulativeProb: number = 1;
+        let previousRM: any;
+        sortedRMs = this.homeService.sortRMBy(this.rms, axis);
 
-        //horizontal lines
-        if (rmIndex == 0) {
-          return;
-        }
-        previousRM = sortedRMs[rmIndex - 1];
-        d3.select(`#riskCurveDots${axisIndex}`)
-          .append('line')
-          .attr('class', 'riskCurveLines')
-          .style('stroke', 'black') // colour the line
-          .style('stroke-linejoin', 'round')
-          .style('stroke-linecap', 'round')
-          .attr('x1', () => {
-            return this.riskCurvesX[axisIndex](
-              previousRM.variables.find(
-                (variable: any) => variable.name == axis
-              )?.value
-            );
-          }) // x position of the first end of the line
-          .attr('y1', () => {
-            return this.riskCurvesY[axisIndex](cumulativeProb + rm.cprobRM);
-          }) // y position of the first end of the line
-          .attr('x2', () => {
-            return this.riskCurvesX[axisIndex](
-              rm.variables.find((variable: any) => variable.name == axis)?.value
-            );
-          }) // x position of the second end of the line
-          .attr('y2', () => {
-            return this.riskCurvesY[axisIndex](cumulativeProb + rm.cprobRM);
-          }); // y position of the second end of the line
+        sortedRMs.forEach((rm: any, rmIndex) => {
+          //vertical lines
+          d3.select(`#riskCurveDots${axisIndex}`)
+            .append('line')
+            .attr('class', 'riskCurveLines')
+            .style('stroke', 'black') // colour the line
+            .style('stroke-linejoin', 'round')
+            .style('stroke-linecap', 'round')
+            .attr('x1', () => {
+              return this.riskCurvesX[axisIndex](
+                rm.variables.find((variable: any) => variable.name == axis)
+                  ?.value
+              );
+            }) // x position of the first end of the line
+            .attr('y1', () => {
+              return this.riskCurvesY[axisIndex](cumulativeProb);
+            }) // y position of the first end of the line
+            .attr('x2', () => {
+              return this.riskCurvesX[axisIndex](
+                rm.variables.find((variable: any) => variable.name == axis)
+                  ?.value
+              );
+            }) // x position of the second end of the line
+            .attr('y2', () => {
+              cumulativeProb -= rm.cprobRM;
+              return this.riskCurvesY[axisIndex](cumulativeProb);
+            }); // y position of the second end of the line
+
+          //horizontal lines
+          if (rmIndex == 0) {
+            return;
+          }
+          previousRM = sortedRMs[rmIndex - 1];
+          d3.select(`#riskCurveDots${axisIndex}`)
+            .append('line')
+            .attr('class', 'riskCurveLines')
+            .style('stroke', 'black') // colour the line
+            .style('stroke-linejoin', 'round')
+            .style('stroke-linecap', 'round')
+            .attr('x1', () => {
+              return this.riskCurvesX[axisIndex](
+                previousRM.variables.find(
+                  (variable: any) => variable.name == axis
+                )?.value
+              );
+            }) // x position of the first end of the line
+            .attr('y1', () => {
+              return this.riskCurvesY[axisIndex](cumulativeProb + rm.cprobRM);
+            }) // y position of the first end of the line
+            .attr('x2', () => {
+              return this.riskCurvesX[axisIndex](
+                rm.variables.find((variable: any) => variable.name == axis)
+                  ?.value
+              );
+            }) // x position of the second end of the line
+            .attr('y2', () => {
+              return this.riskCurvesY[axisIndex](cumulativeProb + rm.cprobRM);
+            }); // y position of the second end of the line
+        });
       });
     });
   }
