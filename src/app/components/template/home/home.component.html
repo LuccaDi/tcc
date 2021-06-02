@@ -14,29 +14,33 @@
   </div>
 
   <mat-tab-group dynamicHeight (selectedIndexChange)="renderCombinedRiskCurves($event)">
+
     <mat-tab label="Solutions">
       <div class="mat-elevation-z4">
         <mat-card class="mat-elevation-z3">
-          <mat-card-title>
-            <button mat-raised-button class="solutionButtons" (click)="previousSolution()">
-              <mat-icon>navigate_before</mat-icon>
-              Previous Solution
-            </button>
+          <mat-card-content>
+            <div id="buttonsCard">
+              <button mat-raised-button class="solutionButtons" (click)="previousSolution()">
+                <mat-icon>navigate_before</mat-icon>
+                Previous Solution
+              </button>
 
-            <mat-form-field class="solutionButtons">
-              <mat-label>Solution</mat-label>
-              <mat-select [(value)]="selectedSolution" (selectionChange)="updateSolutionData()">
-                <mat-option *ngFor="let solution of solutions; let i = index" [value]="i">
-                  Solution {{i + 1}}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
+              <mat-form-field class="solutionButtons">
+                <mat-label>Solution</mat-label>
+                <mat-select [(value)]="selectedSolution" (selectionChange)="updateSolutionData()">
+                  <mat-option *ngFor="let solution of solutions; let i = index" [value]="i">
+                    Solution {{i + 1}}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
 
-            <button mat-raised-button class="solutionButtons" (click)="nextSolution()">
-              Next Solution
-              <mat-icon>navigate_next</mat-icon>
-            </button>
-          </mat-card-title>
+              <button mat-raised-button class="solutionButtons" (click)="nextSolution()">
+                Next Solution
+                <mat-icon>navigate_next</mat-icon>
+              </button>
+            </div>
+
+          </mat-card-content>
         </mat-card>
 
         <div id="charts">
