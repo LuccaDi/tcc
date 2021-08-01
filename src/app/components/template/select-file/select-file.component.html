@@ -1,0 +1,35 @@
+<div id="dialogContainer">
+  <h1>Select a File</h1>
+  <p>Here you can select a optimized solution file to visualize, it has a .json extension</p>
+
+  <!-- <button onclick="document.getElementById('file').click()" mat-raised-button>Choose File</button>
+  <label></label> -->
+  <!-- <mat-form-field>
+
+  </mat-form-field> -->
+
+  <!-- <input type="file" class="file-input" (change)="selectedFile($event)" #fileUpload> -->
+  <input type="file" class="file-input" (change)="onFileSelected($event)" accept=".json" #fileUpload>
+
+  <div class="file-upload">
+    <button mat-mini-fab color="primary" class="upload-btn" (click)="fileUpload.click()">
+      <mat-icon>attach_file</mat-icon>
+    </button>
+
+    {{fileName || "No file selected yet."}}
+
+  </div>
+
+  <br>
+  <p>{{wrongFile}}</p>
+
+  <div mat-dialog-actions>
+    <button mat-button mat-dialog-close [disabled]='data.btnClose'>Close</button>
+    <button mat-button [mat-dialog-close]="file" [disabled]='disabled'>Open</button>
+  </div>
+
+  <!-- <form>
+    <input id="file" (click)="onSelectFile()" type="file">
+    <input id="file" type="file" (change)="selectedFile()" accept=".json">
+  </form> -->
+</div>

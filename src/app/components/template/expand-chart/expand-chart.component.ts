@@ -32,8 +32,6 @@ export class ExpandChartComponent implements OnInit {
 
   private width: any;
 
-  private symbol = d3.symbol();
-
   private x: any;
   private y: any;
 
@@ -42,6 +40,10 @@ export class ExpandChartComponent implements OnInit {
 
   private xAxis: any;
   private yAxis: any;
+
+  private symbol = d3.symbol();
+  private riskSymbol = d3.symbol();
+  private riskCurveSymbol = d3.symbol();
 
   private chartColor = '#d3d3d3';
   private predefinedColor = 'green';
@@ -275,10 +277,14 @@ export class ExpandChartComponent implements OnInit {
         'd',
         this.symbol
           .type((d: any) => {
-            if (d.predefined == true) {
-              return this.predefinedSymbol;
-            } else if (d.rm == true) {
-              return this.rmSymbol;
+            if (this.chartType == 'scatterplot') {
+              if (d.predefined == true) {
+                return this.predefinedSymbol;
+              } else if (d.rm == true) {
+                return this.rmSymbol;
+              } else {
+                return this.modelSymbol;
+              }
             } else {
               return this.modelSymbol;
             }
@@ -323,15 +329,20 @@ export class ExpandChartComponent implements OnInit {
         }
       })
       .attr('fill', (d: any) => {
-        if (d.predefined == true) {
-          return this.predefinedColor;
-        } else if (d.rm == true) {
-          return this.rmColor;
+        if (this.chartType == 'scatterplot') {
+          if (d.predefined == true) {
+            return this.predefinedColor;
+          } else if (d.rm == true) {
+            return this.rmColor;
+          } else {
+            return this.modelColor;
+          }
         } else {
           return this.modelColor;
         }
       })
       .on('click', (d: any) => {
+        // this.brushing(d);
         let dotId = d.srcElement.attributes.id.value;
 
         let iterator =
@@ -449,6 +460,22 @@ export class ExpandChartComponent implements OnInit {
       });
   }
 
+  private brushing(modelClicked: any, cumulativeProb?: any) {
+    d3.select('#chart').selectAll('.brushing').remove();
+
+    let dotId = modelClicked.srcElement.attributes.id.value;
+
+    let iterator =
+      this.chartType == 'combinedRiskCurve'
+        ? this.combinedRiskCurveData
+        : this.data.models;
+
+    iterator.forEach((data: any) => {
+      if (data.id == dotId) {
+      }
+    });
+  }
+
   private zoomed = ({ transform }: any) => {
     this.newXScale = transform
       .rescaleX(this.x)
@@ -475,6 +502,25 @@ export class ExpandChartComponent implements OnInit {
     d3.select('#chart')
       .selectAll('.dot')
       .attr('d', this.symbol.size(50 / transform.k));
+
+    this.rms.forEach((rm: any) => {
+      d3.select(`#chart`)
+        .selectAll(`#rm${rm.id}`)
+        .attr(
+          'd',
+          this.riskCurveSymbol
+            .type(() => {
+              if (rm.predefined == true) {
+                return this.predefinedSymbol;
+              } else if (rm.rm == true) {
+                return this.rmSymbol;
+              } else {
+                return this.modelSymbol;
+              }
+            })
+            .size(50 / transform.k)
+        );
+    });
 
     d3.select('#clip')
       .select('rect')
@@ -602,13 +648,53 @@ export class ExpandChartComponent implements OnInit {
 
     let cumulativeProb: number = 1;
     let previousRM: any;
+
     sortedRMs = this.homeService.sortRMBy(
       this.rms,
       this.riskCurveAxis[this.id]
     );
     lineX = this.riskCurveAxis[this.id];
 
-    sortedRMs.map((rm: any, index: number) => {
+    sortedRMs.forEach((rm: any, index: number) => {
+      //append RMs
+      d3.select(`#chart`)
+        .append('path')
+        .attr('id', `rm${rm.id}`)
+        .attr(
+          'd',
+          this.riskCurveSymbol
+            .type(() => {
+              if (rm.predefined == true) {
+                return this.predefinedSymbol;
+              } else if (rm.rm == true) {
+                return this.rmSymbol;
+              } else {
+                return this.modelSymbol;
+              }
+            })
+            .size(50)
+        )
+        .attr('transform', () => {
+          return `translate(
+       ${this.x(
+         rm.variables.find((variable: any) => variable.name == lineX)?.value
+       )}, ${this.y(
+            cumulativeProb -
+              rm.variables.find((variable: any) => variable.name == lineX)
+                ?.cprobRM /
+                2
+          )})`;
+        })
+        .attr('fill', () => {
+          if (rm.predefined == true) {
+            return this.predefinedColor;
+          } else if (rm.rm == true) {
+            return this.rmColor;
+          } else {
+            return this.modelColor;
+          }
+        });
+
       //vertical lines
       d3.select(`#chart`)
         .append('line')
@@ -630,7 +716,9 @@ export class ExpandChartComponent implements OnInit {
           );
         }) // x position of the second end of the line
         .attr('y2', () => {
-          cumulativeProb -= rm.cprobRM;
+          cumulativeProb -= rm.variables.find(
+            (variable: any) => variable.name == lineX
+          )?.cprobRM;
           return this.y(cumulativeProb);
         }); // y position of the second end of the line
 
@@ -652,7 +740,11 @@ export class ExpandChartComponent implements OnInit {
           );
         }) // x position of the first end of the line
         .attr('y1', () => {
-          return this.y(cumulativeProb + rm.cprobRM);
+          return this.y(
+            cumulativeProb +
+              rm.variables.find((variable: any) => variable.name == lineX)
+                ?.cprobRM
+          );
         }) // y position of the first end of the line
         .attr('x2', () => {
           return this.x(
@@ -660,7 +752,11 @@ export class ExpandChartComponent implements OnInit {
           );
         }) // x position of the second end of the line
         .attr('y2', () => {
-          return this.y(cumulativeProb + rm.cprobRM);
+          return this.y(
+            cumulativeProb +
+              rm.variables.find((variable: any) => variable.name == lineX)
+                ?.cprobRM
+          );
         }); // y position of the second end of the line
     });
   }
@@ -680,7 +776,53 @@ export class ExpandChartComponent implements OnInit {
       );
       lineX = this.riskCurveAxis[this.id];
 
-      sortedRMs.map((rm: any, index: number) => {
+      sortedRMs.forEach((rm: any, index: number) => {
+        //append RMs
+        d3.select(`#chart`)
+          .append('path')
+          .attr('id', `rm${rm.id}`)
+          // .attr('id', 'azul')
+          .attr(
+            'd',
+            this.riskCurveSymbol
+              .type(() => {
+                if (rm.predefined == true) {
+                  return this.predefinedSymbol;
+                } else if (rm.rm == true) {
+                  return this.rmSymbol;
+                } else {
+                  return this.modelSymbol;
+                }
+              })
+              .size(50)
+          )
+          .attr('transform', () => {
+            return `translate(${this.x(
+              rm.variables.find((variable: any) => variable.name == lineX)
+                ?.value
+            )}, ${this.y(
+              cumulativeProb -
+                rm.variables.find((variable: any) => variable.name == lineX)
+                  ?.cprobRM /
+                  2
+            )})`;
+          })
+          .attr('fill', () => {
+            if (rm.predefined == true) {
+              return this.predefinedColor;
+            } else if (rm.rm == true) {
+              return this.rmColor;
+            } else {
+              return this.modelColor;
+            }
+          })
+          .on('click', (modelClicked) => {
+            // console.log(1 - rm.cprobRM / 2);
+            // console.log(prob);
+
+            this.brushing(modelClicked);
+          });
+
         //vertical lines
         d3.select(`#chart`)
           .append('line')
@@ -704,7 +846,9 @@ export class ExpandChartComponent implements OnInit {
             );
           }) // x position of the second end of the line
           .attr('y2', () => {
-            cumulativeProb -= rm.cprobRM;
+            cumulativeProb -= rm.variables.find(
+              (variable: any) => variable.name == lineX
+            )?.cprobRM;
             return this.y(cumulativeProb);
           }); // y position of the second end of the line
 
@@ -727,7 +871,11 @@ export class ExpandChartComponent implements OnInit {
             );
           }) // x position of the first end of the line
           .attr('y1', () => {
-            return this.y(cumulativeProb + rm.cprobRM);
+            return this.y(
+              cumulativeProb +
+                rm.variables.find((variable: any) => variable.name == lineX)
+                  ?.cprobRM
+            );
           }) // y position of the first end of the line
           .attr('x2', () => {
             return this.x(
@@ -736,7 +884,11 @@ export class ExpandChartComponent implements OnInit {
             );
           }) // x position of the second end of the line
           .attr('y2', () => {
-            return this.y(cumulativeProb + rm.cprobRM);
+            return this.y(
+              cumulativeProb +
+                rm.variables.find((variable: any) => variable.name == lineX)
+                  ?.cprobRM
+            );
           }); // y position of the second end of the line
       });
     });

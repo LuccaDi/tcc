@@ -8,6 +8,10 @@
       Clear Selection
     </button>
 
+    <button (click)=" openSelectFileDialog(false)" mat-raised-button class="solutionButtons" style="display: none;">
+      Select File
+    </button>
+
     <svg id="subtitle">
 
     </svg>
@@ -47,7 +51,7 @@
           <div id="divCrossPlotRiskCurve">
             <mat-card class="mat-elevation-z3">
               <mat-card-title>
-                Scatterplot
+                Cross-plot
               </mat-card-title>
 
               <mat-card-content>
