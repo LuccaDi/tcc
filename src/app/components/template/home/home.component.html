@@ -1,0 +1,114 @@
+<app-header></app-header>
+<figure id="home">
+
+  <div id="header">
+
+    <button (click)="clearSelection()" mat-raised-button class="solutionButtons">
+      <!-- <mat-icon>brush</mat-icon> -->
+      Clear Selection
+    </button>
+
+    <svg id="subtitle">
+
+    </svg>
+  </div>
+
+  <mat-tab-group dynamicHeight (selectedIndexChange)="renderCombinedRiskCurves($event)">
+
+    <mat-tab label="Solutions">
+      <div class="mat-elevation-z4">
+        <mat-card class="mat-elevation-z3">
+          <mat-card-content>
+            <div id="buttonsCard">
+              <button mat-raised-button class="solutionButtons" (click)="previousSolution()">
+                <mat-icon>navigate_before</mat-icon>
+                Previous Solution
+              </button>
+
+              <mat-form-field class="solutionButtons">
+                <mat-label>Solution</mat-label>
+                <mat-select [(value)]="selectedSolution" (selectionChange)="updateSolutionData()">
+                  <mat-option *ngFor="let solution of solutions; let i = index" [value]="i">
+                    Solution {{i + 1}}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <button mat-raised-button class="solutionButtons" (click)="nextSolution()">
+                Next Solution
+                <mat-icon>navigate_next</mat-icon>
+              </button>
+            </div>
+
+          </mat-card-content>
+        </mat-card>
+
+        <div id="charts">
+          <div id="divCrossPlotRiskCurve">
+            <mat-card class="mat-elevation-z3">
+              <mat-card-title>
+                Scatterplot
+              </mat-card-title>
+
+              <mat-card-content>
+                <div id="scatterplots">
+
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="mat-elevation-z3">
+              <mat-card-title>
+                Risk Curve
+              </mat-card-title>
+
+              <mat-card-content>
+                <div id="riskCurves">
+
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+
+          <div id="buttonsBarChart">
+            <mat-card class="mat-elevation-z3">
+              <mat-card-actions align="end">
+                <a mat-icon-button (click)="openBarChartNewWindow()">
+                  <mat-icon>open_in_new</mat-icon>
+                </a>
+              </mat-card-actions>
+              <mat-card-content>
+                <div id="barChart">
+
+                </div>
+              </mat-card-content>
+              <mat-card-footer>
+                <div>
+                  <h3 class="borders">
+                    Sum: {{totalSum}}
+                  </h3>
+                </div>
+              </mat-card-footer>
+
+              <mat-card-footer>
+                <div>
+                  <h3>
+                    Pen: {{pen}}
+                  </h3>
+                </div>
+              </mat-card-footer>
+            </mat-card>
+          </div>
+        </div>
+
+
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Combined Risk Curves">
+      <div class="mat-elevation-z4">
+        <app-combined-risk-curves *ngIf="combinedRiskCurvesRendered == true"></app-combined-risk-curves>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</figure>

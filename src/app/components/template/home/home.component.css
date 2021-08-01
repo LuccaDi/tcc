@@ -1,0 +1,81 @@
+#home {
+  margin: 14px 20px;
+}
+
+#header {
+  align-items: flex-start;
+}
+
+.solutionButtons {
+  margin-right: 20px;
+}
+
+#buttonsCard {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+#subtitle {
+  height: 70px;
+  margin-left: auto;
+}
+
+#charts,
+#scatterplots,
+#riskCurves,
+#header {
+  display: flex;
+  flex-direction: row;
+}
+
+#scatterplots,
+#riskCurves {
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
+
+#charts mat-card {
+  margin-top: 20px;
+}
+
+#divCrossPlotRiskCurve,
+#barChart {
+  display: flex;
+  flex-direction: column;
+}
+
+#divCrossPlotRiskCurve {
+  width: 79.5%;
+  margin-right: 20px;
+}
+
+#buttonsBarChart {
+  width: 20.5%;
+  min-width: 235px;
+}
+
+.borders {
+  border-top: 1px solid;
+  border-bottom: 1px solid;
+}
+
+mat-card-title,
+h3 {
+  text-align: center;
+}
+
+a {
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  #charts {
+    flex-wrap: wrap-reverse;
+  }
+  #charts div {
+    width: 100%;
+    margin-right: 0px;
+  }
+}
