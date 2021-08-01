@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import * as d3 from 'd3';
 import { ScaleLinear } from 'd3';
 import { Solution } from '../../model/solution.model';
-import { HomeService } from '../../services/home.service';
+import { cumulatveProb, HomeService } from '../../services/home.service';
+import { SelectFileComponent } from '../select-file/select-file.component';
 
 @Component({
   selector: 'app-home',
@@ -33,7 +35,7 @@ export class HomeComponent implements OnInit {
   private riskCurvesY: ScaleLinear<number, number, never>[] = [];
   private newRiskCurveYScale: ScaleLinear<number, number, never>[] = [];
 
-  private rms: any;
+  private rms: Object[] = [];
   private attributesKeys: string[] = [];
   private barChartAttributes: any;
 
@@ -54,6 +56,8 @@ export class HomeComponent implements OnInit {
   private width: number = this.size - this.marginLeft - this.marginRight;
 
   private symbol = d3.symbol();
+  private riskSymbol = d3.symbol();
+  private riskCurveSymbol = d3.symbol();
 
   private chartColor = '#d3d3d3';
   private predefinedColor = 'green';
@@ -64,10 +68,43 @@ export class HomeComponent implements OnInit {
   private modelSymbol = d3.symbolCircle;
   // private chartColor = 'red';
 
-  constructor(private homeService: HomeService, private router: Router) {}
+  private cprobRModels: cumulatveProb[] = [];
 
-  async ngOnInit(): Promise<void> {
+  private testeCprobs: number[] = [];
+
+  constructor(
+    private homeService: HomeService,
+    private router: Router,
+    private dialog: MatDialog
+  ) {}
+
+  ngOnInit(): void {
+    this.openSelectFileDialog(true);
+  }
+
+  public openSelectFileDialog(init: boolean) {
+    const dialogRef = this.dialog.open(SelectFileComponent, {
+      disableClose: init,
+      data: { btnClose: init },
+    });
+
+    // const dialogRef = this.dialog.open(SelectFileComponent, {
+    //   data: {
+    //     selectedFile: null
+    //   }
+    // });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.initialize(result);
+      }
+    });
+  }
+
+  private async initialize(file: File): Promise<void> {
     this.solutions = await this.homeService.getSolutions().toPromise();
+    // this.solutions = await this.homeService.getTeste(file);
+
     this.data = this.solutions[this.selectedSolution];
 
     this.scatterplotAxis = this.homeService.getScatterplotAxis(
@@ -88,6 +125,11 @@ export class HomeComponent implements OnInit {
 
     this.pen = this.data.barChart.pen;
     this.totalSum = this.data.barChart.totalSum;
+
+    this.cprobRModels = this.homeService.getCprobsRms(
+      this.riskCurveAxis.length,
+      this.rms.length
+    );
 
     this.drawScatterplots();
     this.drawRiskCurves();
@@ -111,6 +153,8 @@ export class HomeComponent implements OnInit {
     // this.size =
     //   (this.width - (this.columns + 1) * this.marginAll) / this.columns +
     //   this.marginAll;
+
+    d3.select(`#scatterplots`).selectAll('div').remove();
 
     divs = d3
       .select(`#scatterplots`)
@@ -420,6 +464,8 @@ export class HomeComponent implements OnInit {
     let svgs;
     let svgDiv;
 
+    d3.select(`#riskCurves`).selectAll('div').remove();
+
     divs = d3
       .select(`#riskCurves`)
       // .append('div')
@@ -613,15 +659,15 @@ export class HomeComponent implements OnInit {
         .attr('class', 'riskCurveModel')
         .attr(
           'd',
-          this.symbol
+          this.riskSymbol
             .type((model) => {
-              if (model.predefined == true) {
-                return this.predefinedSymbol;
-              } else if (model.rm == true) {
-                return this.rmSymbol;
-              } else {
-                return this.modelSymbol;
-              }
+              // if (model.predefined == true) {
+              //   return this.predefinedSymbol;
+              // } else if (model.rm == true) {
+              //   return this.rmSymbol;
+              // } else {
+              return this.modelSymbol;
+              // }
             })
             .size(50)
         )
@@ -639,13 +685,13 @@ export class HomeComponent implements OnInit {
           ](valueY)})`;
         })
         .attr('fill', (model) => {
-          if (model.predefined == true) {
-            return this.predefinedColor;
-          } else if (model.rm == true) {
-            return this.rmColor;
-          } else {
-            return this.modelColor;
-          }
+          // if (model.predefined == true) {
+          //   return this.predefinedColor;
+          // } else if (model.rm == true) {
+          //   return this.rmColor;
+          // } else {
+          return this.modelColor;
+          // }
         })
         .on('click', (modelClicked) => {
           this.brushing(modelClicked);
@@ -654,14 +700,115 @@ export class HomeComponent implements OnInit {
   }
 
   private drawRiskCurveLines() {
-    let sortedRMs: Object[];
-
     this.riskCurveAxis.forEach((axis, axisIndex) => {
+      let sortedRMs: Object[];
       let cumulativeProb: number = 1;
       let previousRM: any;
+
+      // console.log(axis);
+
       sortedRMs = this.homeService.sortRMBy(this.rms, axis);
 
+      // console.log(sortedRMs);
+
       sortedRMs.forEach((rm: any, rmIndex) => {
+        this.cprobRModels[axisIndex].ids[rmIndex] = rm.id;
+        //append RMs
+        d3.select(`#riskCurveDots${axisIndex}`)
+          .append('path')
+          .attr('id', `rm${rm.id}`)
+          .attr('indexRM', rmIndex)
+          // .attr('id', 'azul')
+          .attr(
+            'd',
+            this.riskCurveSymbol
+              .type(() => {
+                if (rm.predefined == true) {
+                  return this.predefinedSymbol;
+                } else if (rm.rm == true) {
+                  return this.rmSymbol;
+                } else {
+                  return this.modelSymbol;
+                }
+              })
+              .size(50)
+          )
+          .attr('transform', () => {
+            // console.log(rm.id);
+            // this.cprobRModels[axisIndex].models[rmIndex] =
+            //   cumulativeProb -
+            //   rm.variables.find((variable: any) => variable.name == axis)
+            //     ?.cprobRM /
+            //     2;
+
+            // console.log(
+            //   axis +
+            //     ': ' +
+            //     rm.variables.find((variable: any) => variable.name == axis)
+            //       ?.cprobRM /
+            //       2
+            // );
+
+            // this.testeCprobs[rmIndex] =
+            //   cumulativeProb -
+            //   rm.variables.find((variable: any) => variable.name == axis)
+            //     ?.cprobRM /
+            //     2;
+
+            // console.log(this.cprobRModels);
+
+            return `translate(
+          ${this.riskCurvesX[axisIndex](
+            rm.variables.find((variable: any) => variable.name == axis)?.value
+          )}, ${this.riskCurvesY[axisIndex](
+              cumulativeProb -
+                rm.variables.find((variable: any) => variable.name == axis)
+                  ?.cprobRM /
+                  2
+            )})`;
+          })
+          .attr('fill', () => {
+            if (rm.predefined == true) {
+              return this.predefinedColor;
+            } else if (rm.rm == true) {
+              return this.rmColor;
+            } else {
+              return this.modelColor;
+            }
+          })
+          .on('click', (modelClicked) => {
+            // console.log(1 - rm.cprobRM / 2);
+            let prob: number = 1;
+            let tempRM: any;
+            // console.log(axis);
+
+            let tempSortededRMs = this.homeService.sortRMBy(this.rms, axis);
+
+            for (let x = 0; x <= rmIndex; x++) {
+              // console.log(x);
+
+              // console.log(tempSortededRMs[x]);
+              // console.log(tempSortededRMs);
+
+              tempRM = tempSortededRMs[x];
+
+              if (x == rmIndex) {
+                prob -=
+                  tempRM.variables.find(
+                    (variable: any) => variable.name == axis
+                  )?.cprobRM / 2;
+              } else {
+                prob -= tempRM.variables.find(
+                  (variable: any) => variable.name == axis
+                )?.cprobRM;
+              }
+            }
+
+            // console.log(prob);
+
+            this.brushing(modelClicked, prob);
+          });
+
         //vertical lines
         d3.select(`#riskCurveDots${axisIndex}`)
           .append('line')
@@ -686,7 +833,9 @@ export class HomeComponent implements OnInit {
             );
           }) // x position of the second end of the line
           .attr('y2', () => {
-            cumulativeProb -= rm.cprobRM;
+            cumulativeProb -= rm.variables.find(
+              (variable: any) => variable.name == axis
+            )?.cprobRM;
             return this.riskCurvesY[axisIndex](cumulativeProb);
           }); // y position of the second end of the line
 
@@ -712,7 +861,11 @@ export class HomeComponent implements OnInit {
             );
           }) // x position of the first end of the line
           .attr('y1', () => {
-            return this.riskCurvesY[axisIndex](cumulativeProb + rm.cprobRM);
+            return this.riskCurvesY[axisIndex](
+              cumulativeProb +
+                rm.variables.find((variable: any) => variable.name == axis)
+                  ?.cprobRM
+            );
           }) // y position of the first end of the line
           .attr('x2', () => {
             return this.riskCurvesX[axisIndex](
@@ -720,7 +873,11 @@ export class HomeComponent implements OnInit {
             );
           }) // x position of the second end of the line
           .attr('y2', () => {
-            return this.riskCurvesY[axisIndex](cumulativeProb + rm.cprobRM);
+            return this.riskCurvesY[axisIndex](
+              cumulativeProb +
+                rm.variables.find((variable: any) => variable.name == axis)
+                  ?.cprobRM
+            );
           }); // y position of the second end of the line
       });
     });
@@ -753,8 +910,28 @@ export class HomeComponent implements OnInit {
 
     d3.select(`#riskCurveDots${id}`)
       .selectAll('.riskCurveModel')
-      .attr('d', this.symbol.size(50 / transform.k));
+      .attr('d', this.riskSymbol.size(50 / transform.k));
     // .attr('d', d3.symbol().size(50 / transform.k));
+
+    this.rms.forEach((rm: any) => {
+      d3.select(`#riskCurveDots${id}`)
+        // .selectAll('.teste')
+        .select(`#rm${rm.id}`)
+        .attr(
+          'd',
+          this.riskCurveSymbol
+            .type(() => {
+              if (rm.predefined == true) {
+                return this.predefinedSymbol;
+              } else if (rm.rm == true) {
+                return this.rmSymbol;
+              } else {
+                return this.modelSymbol;
+              }
+            })
+            .size(50 / transform.k)
+        );
+    });
 
     d3.select(`#riskCurveClip${id}`)
       .select('rect')
@@ -788,6 +965,8 @@ export class HomeComponent implements OnInit {
   //Bar Chart
   private drawBarChart() {
     const barHeight: string = '20px';
+
+    d3.select(`#barChart`).selectAll('div').remove();
 
     // Create the X-axis band scale
     const x = d3.scaleLinear().domain([0, 1]).range([0, 45]);
@@ -844,165 +1023,332 @@ export class HomeComponent implements OnInit {
   }
 
   //Shared
-  private brushing(modelClicked: any) {
+  private brushing(modelClicked: any, cumulativeProb?: any) {
     this.clearSelection();
+
+    console.log(this.testeCprobs);
+
+    let indexId: number;
 
     let modelId = modelClicked.srcElement.attributes.id.value;
 
-    this.data.models.forEach((model: any) => {
-      if (model.id == modelId) {
-        //ScatteplotBrushing
-        this.scatterplotAxis.forEach((axis, axisIndex) => {
-          //vertical lines
-          d3.selectAll(`#scatterplotDots${axisIndex}`)
-            .append('line')
-            .attr('id', 'x')
-            .attr('class', 'brushing')
-            .style('stroke', 'red') // colour the line
-            .style('stroke-width', 1.5)
-            .style('stroke-linejoin', 'round')
-            .style('stroke-linecap', 'round')
-            .attr('x1', () =>
-              this.scatterplotsX[axisIndex](
-                model.variables.find(
-                  (variable: any) => variable.name == axis[0]
-                )?.value
-              )
-            ) // x position of the first end of the line
-            .attr('y1', () =>
-              this.scatterplotsY[axisIndex](
-                this.newScatterplotYScale[axisIndex].domain()[0]
-              )
-            ) // y position of the first end of the line
-            .attr('x2', () =>
-              this.scatterplotsX[axisIndex](
-                model.variables.find(
-                  (variable: any) => variable.name == axis[0]
-                )?.value
-              )
-            ) // x position of the second end of the line
-            .attr('y2', () =>
-              this.scatterplotsY[axisIndex](
-                this.newScatterplotYScale[axisIndex].domain()[1]
-              )
-            ); // y position of the second end of the line
+    // let indexRM = modelClicked.srcElement.attributes.indexRM.value;
 
-          //horizontal lines
-          d3.selectAll(`#scatterplotDots${axisIndex}`)
-            .append('line')
-            .attr('id', 'y')
-            .attr('class', 'brushing')
-            .style('stroke', 'red') // colour the line
-            .style('stroke-width', 1.5)
-            .style('stroke-linejoin', 'round')
-            .style('stroke-linecap', 'round')
-            .attr('x1', () =>
-              this.scatterplotsX[axisIndex](
-                this.newScatterplotXScale[axisIndex].domain()[0]
-              )
-            ) // x position of the first end of the line
-            .attr('y1', () =>
-              this.scatterplotsY[axisIndex](
-                model.variables.find(
-                  (variable: any) => variable.name == axis[1]
-                )?.value
-              )
-            ) // y position of the first end of the line
-            .attr('x2', () =>
-              this.scatterplotsX[axisIndex](
-                this.newScatterplotXScale[axisIndex].domain()[1]
-              )
-            ) // x position of the second end of the line
-            .attr('y2', () =>
-              this.scatterplotsY[axisIndex](
-                model.variables.find(
-                  (variable: any) => variable.name == axis[1]
-                )?.value
-              )
-            ); // y position of the second end of the line
-        });
+    // console.log(this.testeCprobs[indexRM]);
 
-        //Risk Curve Brushing
-        this.riskCurveAxis.forEach((axis, axisIndex) => {
-          //vertical lines
-          d3.selectAll(`#riskCurveDots${axisIndex}`)
-            .append('line')
-            .attr('id', 'x')
-            .attr('class', 'brushing')
-            .style('stroke', 'red') // colour the line
-            .style('stroke-width', 1.5)
-            .style('stroke-linejoin', 'round')
-            .style('stroke-linecap', 'round')
-            .attr('x1', () =>
-              this.riskCurvesX[axisIndex](
-                model.variables.find((variable: any) => variable.name == axis)
-                  ?.value
-              )
-            ) // x position of the first end of the line
-            .attr('y1', () =>
-              this.riskCurvesY[axisIndex](
-                this.newRiskCurveYScale[axisIndex].domain()[0]
-              )
-            ) // y position of the first end of the line
-            .attr('x2', () =>
-              this.riskCurvesX[axisIndex](
-                model.variables.find((variable: any) => variable.name == axis)
-                  ?.value
-              )
-            ) // x position of the second end of the line
-            .attr('y2', () =>
-              this.riskCurvesY[axisIndex](
-                this.newRiskCurveYScale[axisIndex].domain()[1]
-              )
-            ); // y position of the second end of the line
+    if (modelId.indexOf('rm') > -1) {
+      modelId = modelId.substr(2);
+      // console.log(modelId);
+      // console.log(this.rms);
 
-          //horizontal lines
-          d3.selectAll(`#riskCurveDots${axisIndex}`)
-            .append('line')
-            .attr('id', 'y')
-            .attr('class', 'brushing')
-            .style('stroke', 'red') // colour the line
-            .style('stroke-width', 1.5)
-            .style('stroke-linejoin', 'round')
-            .style('stroke-linecap', 'round')
-            .attr('x1', () =>
-              this.riskCurvesX[axisIndex](
-                this.newRiskCurveXScale[axisIndex].domain()[0]
-              )
-            ) // x position of the first end of the line
-            .attr('y1', () =>
-              this.riskCurvesY[axisIndex](
-                model.variables.find((variable: any) => variable.name == axis)
-                  ?.cprob
-              )
-            ) // y position of the first end of the line
-            .attr('x2', () =>
-              this.riskCurvesX[axisIndex](
-                this.newRiskCurveXScale[axisIndex].domain()[1]
-              )
-            ) // x position of the second end of the line
-            .attr('y2', () =>
-              this.riskCurvesY[axisIndex](
-                model.variables.find((variable: any) => variable.name == axis)
-                  ?.cprob
-              )
-            ); // y position of the second end of the line
-        });
+      this.rms.forEach((rm: any) => {
+        if (rm.id == modelId) {
+          //ScatteplotBrushing
+          this.scatterplotAxis.forEach((axis, axisIndex) => {
+            //vertical lines
+            d3.selectAll(`#scatterplotDots${axisIndex}`)
+              .append('line')
+              .attr('id', 'x')
+              .attr('class', 'brushing')
+              .style('stroke', 'red') // colour the line
+              .style('stroke-width', 1.5)
+              .style('stroke-linejoin', 'round')
+              .style('stroke-linecap', 'round')
+              .attr('x1', () =>
+                this.scatterplotsX[axisIndex](
+                  rm.variables.find((variable: any) => variable.name == axis[0])
+                    ?.value
+                )
+              ) // x position of the first end of the line
+              .attr('y1', () =>
+                this.scatterplotsY[axisIndex](
+                  this.newScatterplotYScale[axisIndex].domain()[0]
+                )
+              ) // y position of the first end of the line
+              .attr('x2', () =>
+                this.scatterplotsX[axisIndex](
+                  rm.variables.find((variable: any) => variable.name == axis[0])
+                    ?.value
+                )
+              ) // x position of the second end of the line
+              .attr('y2', () =>
+                this.scatterplotsY[axisIndex](
+                  this.newScatterplotYScale[axisIndex].domain()[1]
+                )
+              ); // y position of the second end of the line
 
-        //bar chart brushing
-        this.attributesKeys.map((key) => {
-          d3.select(
-            `#${
-              key +
-              model.attributes.find((attribute: any) => attribute.name == key)
-                .value
-            }`
-          )
-            .style('background-color', 'lightblue')
-            .style('border', 'solid medium green');
-        });
-      }
-    });
+            //horizontal lines
+            d3.selectAll(`#scatterplotDots${axisIndex}`)
+              .append('line')
+              .attr('id', 'y')
+              .attr('class', 'brushing')
+              .style('stroke', 'red') // colour the line
+              .style('stroke-width', 1.5)
+              .style('stroke-linejoin', 'round')
+              .style('stroke-linecap', 'round')
+              .attr('x1', () =>
+                this.scatterplotsX[axisIndex](
+                  this.newScatterplotXScale[axisIndex].domain()[0]
+                )
+              ) // x position of the first end of the line
+              .attr('y1', () =>
+                this.scatterplotsY[axisIndex](
+                  rm.variables.find((variable: any) => variable.name == axis[1])
+                    ?.value
+                )
+              ) // y position of the first end of the line
+              .attr('x2', () =>
+                this.scatterplotsX[axisIndex](
+                  this.newScatterplotXScale[axisIndex].domain()[1]
+                )
+              ) // x position of the second end of the line
+              .attr('y2', () =>
+                this.scatterplotsY[axisIndex](
+                  rm.variables.find((variable: any) => variable.name == axis[1])
+                    ?.value
+                )
+              ); // y position of the second end of the line
+          });
+
+          //Risk Curve Brushing
+          this.riskCurveAxis.forEach((axis, axisIndex) => {
+            indexId = this.cprobRModels[axisIndex].ids.indexOf(rm.id);
+
+            //vertical lines
+            d3.selectAll(`#riskCurveDots${axisIndex}`)
+              .append('line')
+              .attr('id', 'x')
+              .attr('class', 'brushing')
+              .style('stroke', 'red') // colour the line
+              .style('stroke-width', 1.5)
+              .style('stroke-linejoin', 'round')
+              .style('stroke-linecap', 'round')
+              .attr('x1', () =>
+                this.riskCurvesX[axisIndex](
+                  rm.variables.find((variable: any) => variable.name == axis)
+                    ?.value
+                )
+              ) // x position of the first end of the line
+              .attr('y1', () =>
+                this.riskCurvesY[axisIndex](
+                  this.newRiskCurveYScale[axisIndex].domain()[0]
+                )
+              ) // y position of the first end of the line
+              .attr('x2', () =>
+                this.riskCurvesX[axisIndex](
+                  rm.variables.find((variable: any) => variable.name == axis)
+                    ?.value
+                )
+              ) // x position of the second end of the line
+              .attr('y2', () =>
+                this.riskCurvesY[axisIndex](
+                  this.newRiskCurveYScale[axisIndex].domain()[1]
+                )
+              ); // y position of the second end of the line
+
+            //horizontal lines
+            d3.selectAll(`#riskCurveDots${axisIndex}`)
+              .append('line')
+              .attr('id', 'y')
+              .attr('class', 'brushing')
+              .style('stroke', 'red') // colour the line
+              .style('stroke-width', 1.5)
+              .style('stroke-linejoin', 'round')
+              .style('stroke-linecap', 'round')
+              .attr('x1', () =>
+                this.riskCurvesX[axisIndex](
+                  this.newRiskCurveXScale[axisIndex].domain()[0]
+                )
+              ) // x position of the first end of the line
+              .attr(
+                'y1',
+                () =>
+                  this.riskCurvesY[axisIndex](this.testeCprobs[cumulativeProb])
+                // this.riskCurvesY[axisIndex](
+                //   rm.variables.find((variable: any) => variable.name == axis)
+                //     ?.cprob
+                // )
+              ) // y position of the first end of the line
+              .attr('x2', () =>
+                this.riskCurvesX[axisIndex](
+                  this.newRiskCurveXScale[axisIndex].domain()[1]
+                )
+              ) // x position of the second end of the line
+              .attr('y2', () =>
+                this.riskCurvesY[axisIndex](this.testeCprobs[cumulativeProb])
+              ); // y position of the second end of the line
+          });
+
+          //bar chart brushing
+          this.attributesKeys.map((key) => {
+            d3.select(
+              `#${
+                key +
+                rm.attributes.find((attribute: any) => attribute.name == key)
+                  .value
+              }`
+            )
+              .style('background-color', 'lightblue')
+              .style('border', 'solid medium green');
+          });
+        }
+      });
+    } else {
+      this.data.models.forEach((model: any) => {
+        if (model.id == modelId) {
+          //ScatteplotBrushing
+          this.scatterplotAxis.forEach((axis, axisIndex) => {
+            //vertical lines
+            d3.selectAll(`#scatterplotDots${axisIndex}`)
+              .append('line')
+              .attr('id', 'x')
+              .attr('class', 'brushing')
+              .style('stroke', 'red') // colour the line
+              .style('stroke-width', 1.5)
+              .style('stroke-linejoin', 'round')
+              .style('stroke-linecap', 'round')
+              .attr('x1', () =>
+                this.scatterplotsX[axisIndex](
+                  model.variables.find(
+                    (variable: any) => variable.name == axis[0]
+                  )?.value
+                )
+              ) // x position of the first end of the line
+              .attr('y1', () =>
+                this.scatterplotsY[axisIndex](
+                  this.newScatterplotYScale[axisIndex].domain()[0]
+                )
+              ) // y position of the first end of the line
+              .attr('x2', () =>
+                this.scatterplotsX[axisIndex](
+                  model.variables.find(
+                    (variable: any) => variable.name == axis[0]
+                  )?.value
+                )
+              ) // x position of the second end of the line
+              .attr('y2', () =>
+                this.scatterplotsY[axisIndex](
+                  this.newScatterplotYScale[axisIndex].domain()[1]
+                )
+              ); // y position of the second end of the line
+
+            //horizontal lines
+            d3.selectAll(`#scatterplotDots${axisIndex}`)
+              .append('line')
+              .attr('id', 'y')
+              .attr('class', 'brushing')
+              .style('stroke', 'red') // colour the line
+              .style('stroke-width', 1.5)
+              .style('stroke-linejoin', 'round')
+              .style('stroke-linecap', 'round')
+              .attr('x1', () =>
+                this.scatterplotsX[axisIndex](
+                  this.newScatterplotXScale[axisIndex].domain()[0]
+                )
+              ) // x position of the first end of the line
+              .attr('y1', () =>
+                this.scatterplotsY[axisIndex](
+                  model.variables.find(
+                    (variable: any) => variable.name == axis[1]
+                  )?.value
+                )
+              ) // y position of the first end of the line
+              .attr('x2', () =>
+                this.scatterplotsX[axisIndex](
+                  this.newScatterplotXScale[axisIndex].domain()[1]
+                )
+              ) // x position of the second end of the line
+              .attr('y2', () =>
+                this.scatterplotsY[axisIndex](
+                  model.variables.find(
+                    (variable: any) => variable.name == axis[1]
+                  )?.value
+                )
+              ); // y position of the second end of the line
+          });
+
+          //Risk Curve Brushing
+          this.riskCurveAxis.forEach((axis, axisIndex) => {
+            //vertical lines
+            d3.selectAll(`#riskCurveDots${axisIndex}`)
+              .append('line')
+              .attr('id', 'x')
+              .attr('class', 'brushing')
+              .style('stroke', 'red') // colour the line
+              .style('stroke-width', 1.5)
+              .style('stroke-linejoin', 'round')
+              .style('stroke-linecap', 'round')
+              .attr('x1', () =>
+                this.riskCurvesX[axisIndex](
+                  model.variables.find((variable: any) => variable.name == axis)
+                    ?.value
+                )
+              ) // x position of the first end of the line
+              .attr('y1', () =>
+                this.riskCurvesY[axisIndex](
+                  this.newRiskCurveYScale[axisIndex].domain()[0]
+                )
+              ) // y position of the first end of the line
+              .attr('x2', () =>
+                this.riskCurvesX[axisIndex](
+                  model.variables.find((variable: any) => variable.name == axis)
+                    ?.value
+                )
+              ) // x position of the second end of the line
+              .attr('y2', () =>
+                this.riskCurvesY[axisIndex](
+                  this.newRiskCurveYScale[axisIndex].domain()[1]
+                )
+              ); // y position of the second end of the line
+
+            //horizontal lines
+            d3.selectAll(`#riskCurveDots${axisIndex}`)
+              .append('line')
+              .attr('id', 'y')
+              .attr('class', 'brushing')
+              .style('stroke', 'red') // colour the line
+              .style('stroke-width', 1.5)
+              .style('stroke-linejoin', 'round')
+              .style('stroke-linecap', 'round')
+              .attr('x1', () =>
+                this.riskCurvesX[axisIndex](
+                  this.newRiskCurveXScale[axisIndex].domain()[0]
+                )
+              ) // x position of the first end of the line
+              .attr('y1', () =>
+                this.riskCurvesY[axisIndex](
+                  model.variables.find((variable: any) => variable.name == axis)
+                    ?.cprob
+                )
+              ) // y position of the first end of the line
+              .attr('x2', () =>
+                this.riskCurvesX[axisIndex](
+                  this.newRiskCurveXScale[axisIndex].domain()[1]
+                )
+              ) // x position of the second end of the line
+              .attr('y2', () =>
+                this.riskCurvesY[axisIndex](
+                  model.variables.find((variable: any) => variable.name == axis)
+                    ?.cprob
+                )
+              ); // y position of the second end of the line
+          });
+
+          //bar chart brushing
+          this.attributesKeys.map((key) => {
+            d3.select(
+              `#${
+                key +
+                model.attributes.find((attribute: any) => attribute.name == key)
+                  .value
+              }`
+            )
+              .style('background-color', 'lightblue')
+              .style('border', 'solid medium green');
+          });
+        }
+      });
+    }
   }
 
   private colorCharts() {

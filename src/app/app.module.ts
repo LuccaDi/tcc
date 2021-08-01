@@ -12,12 +12,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatDialogModule } from '@angular/material/dialog';
 
 import { HeaderComponent } from './components/template/header/header.component';
 import { HomeComponent } from './components/template/home/home.component';
 import { ExpandChartComponent } from './components/template/expand-chart/expand-chart.component';
 import { ExpandBarChartComponent } from './components/template/expand-bar-chart/expand-bar-chart.component';
 import { CombinedRiskCurvesComponent } from './components/template/combined-risk-curves/combined-risk-curves.component';
+import { SelectFileComponent } from './components/template/select-file/select-file.component';
 
 @NgModule({
   declarations: [
@@ -27,6 +29,7 @@ import { CombinedRiskCurvesComponent } from './components/template/combined-risk
     ExpandChartComponent,
     ExpandBarChartComponent,
     CombinedRiskCurvesComponent,
+    SelectFileComponent,
   ],
   imports: [
     BrowserModule,
@@ -40,6 +43,7 @@ import { CombinedRiskCurvesComponent } from './components/template/combined-risk
     MatIconModule,
     MatSelectModule,
     MatTabsModule,
+    MatDialogModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

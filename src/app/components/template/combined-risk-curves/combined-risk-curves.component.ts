@@ -36,6 +36,8 @@ export class CombinedRiskCurvesComponent implements OnInit {
   private width: number = this.size - this.marginLeft - this.marginRight;
 
   private symbol = d3.symbol();
+  private riskSymbol = d3.symbol();
+  private riskCurveSymbol = d3.symbol();
 
   private chartColor = '#d3d3d3';
   private predefinedColor = 'green';
@@ -290,13 +292,13 @@ export class CombinedRiskCurvesComponent implements OnInit {
           'd',
           this.symbol
             .type((model) => {
-              if (model.predefined == true) {
-                return this.predefinedSymbol;
-              } else if (model.rm == true) {
-                return this.rmSymbol;
-              } else {
-                return this.modelSymbol;
-              }
+              // if (model.predefined == true) {
+              //   return this.predefinedSymbol;
+              // } else if (model.rm == true) {
+              //   return this.rmSymbol;
+              // } else {
+              return this.modelSymbol;
+              // }
             })
             .size(50)
         )
@@ -314,13 +316,13 @@ export class CombinedRiskCurvesComponent implements OnInit {
           ](valueY)})`;
         })
         .attr('fill', (model: any) => {
-          if (model.predefined == true) {
-            return this.predefinedColor;
-          } else if (model.rm == true) {
-            return this.rmColor;
-          } else {
-            return this.modelColor;
-          }
+          // if (model.predefined == true) {
+          //   return this.predefinedColor;
+          // } else if (model.rm == true) {
+          //   return this.rmColor;
+          // } else {
+          return this.modelColor;
+          // }
         })
         .on('click', (modelClicked) => {
           this.brushing(modelClicked);
@@ -340,6 +342,52 @@ export class CombinedRiskCurvesComponent implements OnInit {
         sortedRMs = this.homeService.sortRMBy(this.rms, axis);
 
         sortedRMs.forEach((rm: any, rmIndex) => {
+          //append RMs
+          d3.select(`#riskCurveDots${axisIndex}`)
+            .append('path')
+            .attr('id', `rm${rm.id}`)
+            // .attr('id', 'azul')
+            .attr(
+              'd',
+              this.riskCurveSymbol
+                .type(() => {
+                  if (rm.predefined == true) {
+                    return this.predefinedSymbol;
+                  } else if (rm.rm == true) {
+                    return this.rmSymbol;
+                  } else {
+                    return this.modelSymbol;
+                  }
+                })
+                .size(50)
+            )
+            .attr('transform', () => {
+              return `translate(${this.riskCurvesX[axisIndex](
+                rm.variables.find((variable: any) => variable.name == axis)
+                  ?.value
+              )}, ${this.riskCurvesY[axisIndex](
+                cumulativeProb -
+                  rm.variables.find((variable: any) => variable.name == axis)
+                    ?.cprobRM /
+                    2
+              )})`;
+            })
+            .attr('fill', () => {
+              if (rm.predefined == true) {
+                return this.predefinedColor;
+              } else if (rm.rm == true) {
+                return this.rmColor;
+              } else {
+                return this.modelColor;
+              }
+            })
+            .on('click', (modelClicked) => {
+              // console.log(1 - rm.cprobRM / 2);
+              // console.log(prob);
+
+              this.brushing(modelClicked);
+            });
+
           //vertical lines
           d3.select(`#riskCurveDots${axisIndex}`)
             .append('line')
@@ -363,7 +411,9 @@ export class CombinedRiskCurvesComponent implements OnInit {
               );
             }) // x position of the second end of the line
             .attr('y2', () => {
-              cumulativeProb -= rm.cprobRM;
+              cumulativeProb -= rm.variables.find(
+                (variable: any) => variable.name == axis
+              )?.cprobRM;
               return this.riskCurvesY[axisIndex](cumulativeProb);
             }); // y position of the second end of the line
 
@@ -386,7 +436,11 @@ export class CombinedRiskCurvesComponent implements OnInit {
               );
             }) // x position of the first end of the line
             .attr('y1', () => {
-              return this.riskCurvesY[axisIndex](cumulativeProb + rm.cprobRM);
+              return this.riskCurvesY[axisIndex](
+                cumulativeProb +
+                  rm.variables.find((variable: any) => variable.name == axis)
+                    ?.cprobRM
+              );
             }) // y position of the first end of the line
             .attr('x2', () => {
               return this.riskCurvesX[axisIndex](
@@ -395,7 +449,11 @@ export class CombinedRiskCurvesComponent implements OnInit {
               );
             }) // x position of the second end of the line
             .attr('y2', () => {
-              return this.riskCurvesY[axisIndex](cumulativeProb + rm.cprobRM);
+              return this.riskCurvesY[axisIndex](
+                cumulativeProb +
+                  rm.variables.find((variable: any) => variable.name == axis)
+                    ?.cprobRM
+              );
             }); // y position of the second end of the line
         });
       });
@@ -434,6 +492,26 @@ export class CombinedRiskCurvesComponent implements OnInit {
     d3.select(`#riskCurveDots${id}`)
       .selectAll('.model')
       .attr('d', this.symbol.size(50 / transform.k));
+
+    this.rms.forEach((rm: any) => {
+      d3.select(`#riskCurveDots${id}`)
+        // .selectAll('.teste')
+        .selectAll(`#rm${rm.id}`)
+        .attr(
+          'd',
+          this.riskCurveSymbol
+            .type(() => {
+              if (rm.predefined == true) {
+                return this.predefinedSymbol;
+              } else if (rm.rm == true) {
+                return this.rmSymbol;
+              } else {
+                return this.modelSymbol;
+              }
+            })
+            .size(50 / transform.k)
+        );
+    });
 
     d3.select(`#riskCurveClip${id}`)
       .select('rect')

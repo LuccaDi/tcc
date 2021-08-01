@@ -8,6 +8,8 @@
 
 .solutionButtons {
   margin-right: 20px;
+  padding: 0px 0px 0px 0px;
+  min-width: 150px;
 }
 
 #buttonsCard {
@@ -70,12 +72,26 @@ a {
   cursor: pointer;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 615px) {
   #charts {
     flex-wrap: wrap-reverse;
   }
   #charts div {
     width: 100%;
     margin-right: 0px;
+  }
+}
+
+@media (max-width: 575px) {
+  #buttonsCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .solutionButtons {
+    margin-right: 0px;
+    margin-bottom: 20px;
   }
 }
