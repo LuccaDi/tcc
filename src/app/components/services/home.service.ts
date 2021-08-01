@@ -16,12 +16,15 @@ export class HomeService {
   testeNewJson = 'https://run.mocky.io/v3/67e9a971-49f2-4b34-ab1a-b33a7e097b6e';
 
   multiSolutions =
-    'https://run.mocky.io/v3/7bd00a16-cb46-42d1-9e83-150a23748115';
+    'https://run.mocky.io/v3/fc29c6bf-6dae-4142-b982-a191ccd14cf5';
+
+  refactorModel =
+    'https://run.mocky.io/v3/dc105ee6-0982-44c6-8e26-0e27d9d04fdb';
 
   constructor(private http: HttpClient) {}
 
   getSolutions(): Observable<Solution[]> {
-    return this.http.get<Solution[]>(this.multiSolutions);
+    return this.http.get<Solution[]>(this.refactorModel);
   }
 
   getRMs(solution: Solution) {
@@ -35,7 +38,11 @@ export class HomeService {
   sortRMBy(array: Object[], by: string): Object[] {
     return array.sort(
       (a: any, b: any) =>
-        0 - (a.variables[by].value > b.variables[by].value ? -1 : 1)
+        0 -
+        (a.variables.find((variable: any) => variable.name == by)?.value >
+        b.variables.find((variable: any) => variable.name == by)?.value
+          ? -1
+          : 1)
     );
   }
 
@@ -57,7 +64,7 @@ export class HomeService {
     return matrice;
   }
 
-  getRiskCurveAxis(variables: {}): string[] {
-    return Object.keys(variables);
+  getRiskCurveAxis(variables: any[]): string[] {
+    return variables.map((variable) => variable.name);
   }
 }

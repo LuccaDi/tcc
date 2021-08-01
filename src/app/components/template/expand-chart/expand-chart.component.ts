@@ -17,6 +17,7 @@ export class ExpandChartComponent implements OnInit {
   private rms: any;
   private data = <Solution>{};
   private solutions: Solution[] = [];
+  private combinedRiskCurveData: Object[] = [];
 
   // private data: Solution[] = [];
   // private rms: newChart[] = [];
@@ -43,6 +44,12 @@ export class ExpandChartComponent implements OnInit {
   private yAxis: any;
 
   private chartColor = '#d3d3d3';
+  private predefinedColor = 'green';
+  private rmColor = 'orange';
+  private modelColor = '#a28ad2';
+  private predefinedSymbol = d3.symbolDiamond;
+  private rmSymbol = d3.symbolStar;
+  private modelSymbol = d3.symbolCircle;
 
   expandedChartWidth = 0;
   expandedChartHeight = 0;
@@ -58,28 +65,44 @@ export class ExpandChartComponent implements OnInit {
     this.chartType = this.route.snapshot.params.chart;
     this.selectedSolution = this.route.snapshot.params.solution;
 
-    console.log(this.selectedSolution);
-
     this.solutions = await this.homeService.getSolutions().toPromise();
-    this.data = this.solutions[this.selectedSolution];
 
-    this.scatterplotAxis = this.homeService.getScatterplotAxis(
-      this.data.fcrossUsed
-    );
-    this.riskCurveAxis = this.homeService.getRiskCurveAxis(
-      this.data.models[0].variables
-    );
+    if (this.selectedSolution >= 0) {
+      this.data = this.solutions[this.selectedSolution];
+
+      this.scatterplotAxis = this.homeService.getScatterplotAxis(
+        this.data.fcrossUsed
+      );
+      this.riskCurveAxis = this.homeService.getRiskCurveAxis(
+        this.data.models[0].variables
+      );
+
+      this.rms = this.homeService.getRMs(this.data);
+    } else {
+      let tempSolutionModels;
+
+      this.solutions.forEach((solution) => {
+        tempSolutionModels = solution.models;
+
+        this.combinedRiskCurveData =
+          this.combinedRiskCurveData.concat(tempSolutionModels);
+      });
+
+      this.riskCurveAxis = this.homeService.getRiskCurveAxis(
+        this.solutions[0].models[0].variables
+      );
+    }
 
     // this.data = await this.homeService.getData().toPromise();
     // this.rms = await this.homeService.getRMs();
-
-    this.rms = this.homeService.getRMs(this.data);
 
     this.drawPlot();
     this.addDots();
     this.colorChart();
     if (this.chartType == 'riskCurve') {
       this.drawRiskCurveLines();
+    } else if (this.chartType == 'combinedRiskCurve') {
+      this.drawCombinedRiskCurveLines();
     }
   }
 
@@ -114,16 +137,30 @@ export class ExpandChartComponent implements OnInit {
   }
 
   private addX() {
-    let domain;
+    let domain: any;
     let extentDomain: any;
 
     if (this.chartType == 'scatterplot') {
-      domain = this.data.models.map((d: any) => {
-        return d.variables[this.scatterplotAxis[this.id][0]].value;
+      domain = this.data.models.map((model) => {
+        return model.variables.find(
+          (variable) => variable.name == this.scatterplotAxis[this.id][0]
+        )?.value;
+      });
+    } else if (this.chartType == 'riskCurve') {
+      domain = this.data.models.map((model) => {
+        return model.variables.find(
+          (variable) => variable.name == this.riskCurveAxis[this.id]
+        )?.value;
       });
     } else {
-      domain = this.data.models.map((d: any) => {
-        return d.variables[this.riskCurveAxis[this.id]].value;
+      this.solutions.forEach((solution) => {
+        domain = solution.models.map((model) => {
+          return model.variables.find(
+            (variable) => variable.name == this.riskCurveAxis[this.id]
+          )?.value;
+        });
+
+        domain = domain.concat(domain);
       });
     }
 
@@ -153,13 +190,16 @@ export class ExpandChartComponent implements OnInit {
   }
 
   private addY() {
-    let domain;
+    let domain: any;
     let extentDomain: any;
 
     if (this.chartType == 'scatterplot') {
-      domain = this.data.models.map((d: any) => {
-        return d.variables[this.scatterplotAxis[this.id][1]].value;
+      domain = this.data.models.map((model) => {
+        return model.variables.find(
+          (variable) => variable.name == this.scatterplotAxis[this.id][1]
+        )?.value;
       });
+
       extentDomain = d3.extent(domain);
     } else {
       extentDomain = [0, 1];
@@ -222,7 +262,12 @@ export class ExpandChartComponent implements OnInit {
       .attr('id', () => 'chart')
       .attr('clip-path', () => `url(#clip)`)
       .selectAll('path')
-      .data(this.data.models)
+      // .data(this.data.models)
+      .data(
+        this.chartType == 'combinedRiskCurve'
+          ? this.combinedRiskCurveData
+          : this.data.models
+      )
       .join('path')
       .attr('id', (d: any) => d.id)
       .attr('class', 'dot')
@@ -231,50 +276,74 @@ export class ExpandChartComponent implements OnInit {
         this.symbol
           .type((d: any) => {
             if (d.predefined == true) {
-              return d3.symbolSquare;
+              return this.predefinedSymbol;
             } else if (d.rm == true) {
-              return d3.symbolDiamond;
+              return this.rmSymbol;
             } else {
-              return d3.symbolCircle;
+              return this.modelSymbol;
             }
           })
           .size(50)
       )
-      .attr('transform', (d: any) => {
+      .attr('transform', (model: any) => {
         if (this.chartType == 'scatterplot') {
           return (
             'translate(' +
-            this.x(d.variables[this.scatterplotAxis[this.id][0]].value) +
+            this.x(
+              model.variables.find(
+                (variable: any) =>
+                  variable.name == this.scatterplotAxis[this.id][0]
+              )?.value
+            ) +
             ',' +
-            this.y(d.variables[this.scatterplotAxis[this.id][1]].value) +
+            this.y(
+              model.variables.find(
+                (variable: any) =>
+                  variable.name == this.scatterplotAxis[this.id][1]
+              )?.value
+            ) +
             ')'
           );
         } else {
           return (
             'translate(' +
-            this.x(d.variables[this.riskCurveAxis[this.id]].value) +
+            this.x(
+              model.variables.find(
+                (variable: any) => variable.name == this.riskCurveAxis[this.id]
+              )?.value
+            ) +
             ',' +
-            this.y(d.variables[this.riskCurveAxis[this.id]].cprob) +
+            this.y(
+              model.variables.find(
+                (variable: any) => variable.name == this.riskCurveAxis[this.id]
+              )?.cprob
+            ) +
             ')'
           );
         }
       })
       .attr('fill', (d: any) => {
         if (d.predefined == true) {
-          return 'red';
+          return this.predefinedColor;
         } else if (d.rm == true) {
-          return 'green';
+          return this.rmColor;
         } else {
-          return '#a28ad2';
+          return this.modelColor;
         }
       })
       .on('click', (d: any) => {
         let dotId = d.srcElement.attributes.id.value;
 
-        this.data.models.map((data: any) => {
+        let iterator =
+          this.chartType == 'combinedRiskCurve'
+            ? this.combinedRiskCurveData
+            : this.data.models;
+
+        iterator.forEach((data: any) => {
           if (data.id == dotId) {
             d3.select('#chart').selectAll('.brushing').remove();
 
+            //vertical lines
             d3.select('#chart')
               .append('line')
               .attr('id', 'x')
@@ -286,11 +355,17 @@ export class ExpandChartComponent implements OnInit {
               .attr('x1', () => {
                 if (this.chartType == 'scatterplot') {
                   return this.x(
-                    data.variables[this.scatterplotAxis[this.id][0]].value
+                    data.variables.find(
+                      (variable: any) =>
+                        variable.name == this.scatterplotAxis[this.id][0]
+                    )?.value
                   );
                 } else {
                   return this.x(
-                    data.variables[this.riskCurveAxis[this.id]].value
+                    data.variables.find(
+                      (variable: any) =>
+                        variable.name == this.riskCurveAxis[this.id]
+                    )?.value
                   );
                 }
               }) // x position of the first end of the line
@@ -300,11 +375,17 @@ export class ExpandChartComponent implements OnInit {
               .attr('x2', () => {
                 if (this.chartType == 'scatterplot') {
                   return this.x(
-                    data.variables[this.scatterplotAxis[this.id][0]].value
+                    data.variables.find(
+                      (variable: any) =>
+                        variable.name == this.scatterplotAxis[this.id][0]
+                    )?.value
                   );
                 } else {
                   return this.x(
-                    data.variables[this.riskCurveAxis[this.id]].value
+                    data.variables.find(
+                      (variable: any) =>
+                        variable.name == this.riskCurveAxis[this.id]
+                    )?.value
                   );
                 }
               }) // x position of the second end of the line
@@ -312,6 +393,7 @@ export class ExpandChartComponent implements OnInit {
                 return this.y(this.newYScale.domain()[1]);
               }); // y position of the second end of the line
 
+            //horizontal lines
             d3.select('#chart')
               .append('line')
               .attr('id', 'y')
@@ -326,11 +408,17 @@ export class ExpandChartComponent implements OnInit {
               .attr('y1', () => {
                 if (this.chartType == 'scatterplot') {
                   return this.y(
-                    data.variables[this.scatterplotAxis[this.id][1]].value
+                    data.variables.find(
+                      (variable: any) =>
+                        variable.name == this.scatterplotAxis[this.id][1]
+                    )?.value
                   );
                 } else {
                   return this.y(
-                    data.variables[this.riskCurveAxis[this.id]].cprob
+                    data.variables.find(
+                      (variable: any) =>
+                        variable.name == this.riskCurveAxis[this.id]
+                    )?.cprob
                   );
                 }
               }) // y position of the first end of the line
@@ -340,11 +428,17 @@ export class ExpandChartComponent implements OnInit {
               .attr('y2', () => {
                 if (this.chartType == 'scatterplot') {
                   return this.y(
-                    data.variables[this.scatterplotAxis[this.id][1]].value
+                    data.variables.find(
+                      (variable: any) =>
+                        variable.name == this.scatterplotAxis[this.id][1]
+                    )?.value
                   );
                 } else {
                   return this.y(
-                    data.variables[this.riskCurveAxis[this.id]].cprob
+                    data.variables.find(
+                      (variable: any) =>
+                        variable.name == this.riskCurveAxis[this.id]
+                    )?.cprob
                   );
                 }
               }); // y position of the second end of the line
@@ -414,37 +508,36 @@ export class ExpandChartComponent implements OnInit {
     this.colorChart();
   };
 
-  private displayInfo(data: any) {
+  private displayInfo(model: any) {
     let info;
     let info2;
 
-    let entries = Object.entries(data).filter((d) => {
+    let entries: any = Object.entries(model).filter((d) => {
       return (
         typeof d[1] != 'object' &&
         d[0] != 'predefined' &&
         d[0] != 'rm' &&
+        d[0] != 'attributes' &&
+        d[0] != 'variables' &&
         d[1] != null
       );
     });
 
-    Object.entries(data.attributes).forEach((d) => {
-      entries.push(d);
+    model.attributes.forEach((d: any) => {
+      entries.push(Object.values(d));
     });
 
-    Object.entries(data.variables).forEach((d) => {
-      entries.push(d);
+    model.variables.forEach((d: any) => {
+      entries.push(Object.values(d));
     });
 
-    info = entries.filter((d, i) => {
+    info = entries.filter((d: any, i: any) => {
       return i < Math.round(entries.length / 2);
     });
 
-    info2 = entries.filter((d, i) => {
+    info2 = entries.filter((d: any, i: any) => {
       return i >= Math.round(entries.length / 2);
     });
-
-    console.log(info);
-    console.log(info2);
 
     d3.select('#dotsInfo').selectAll('div').remove();
 
@@ -456,8 +549,8 @@ export class ExpandChartComponent implements OnInit {
       .data(info)
       .join('p')
       .text((d: any) => {
-        return typeof d[1] == 'object'
-          ? `${d[0]} =  ${d[1].value}, C.Prob = ${d[1].cprob}`
+        return d.length > 2
+          ? `${d[0]} =  ${d[1]}, C.Prob = ${d[2]}`
           : `${d[0]} =  ${d[1]}`;
       });
 
@@ -468,8 +561,8 @@ export class ExpandChartComponent implements OnInit {
       .data(info2)
       .join('p')
       .text((d: any) => {
-        return typeof d[1] == 'object'
-          ? `${d[0]} =  ${d[1].value}, C.Prob = ${d[1].cprob}`
+        return d.length > 2
+          ? `${d[0]} =  ${d[1]}, C.Prob = ${d[2]}`
           : `${d[0]} =  ${d[1]}`;
       });
   }
@@ -524,13 +617,17 @@ export class ExpandChartComponent implements OnInit {
         .style('stroke-linejoin', 'round')
         .style('stroke-linecap', 'round')
         .attr('x1', () => {
-          return this.x(rm.variables[lineX].value);
+          return this.x(
+            rm.variables.find((variable: any) => variable.name == lineX)?.value
+          );
         }) // x position of the first end of the line
         .attr('y1', () => {
           return this.y(cumulativeProb);
         }) // y position of the first end of the line
         .attr('x2', () => {
-          return this.x(rm.variables[lineX].value);
+          return this.x(
+            rm.variables.find((variable: any) => variable.name == lineX)?.value
+          );
         }) // x position of the second end of the line
         .attr('y2', () => {
           cumulativeProb -= rm.cprobRM;
@@ -549,17 +646,99 @@ export class ExpandChartComponent implements OnInit {
         .style('stroke-linejoin', 'round')
         .style('stroke-linecap', 'round')
         .attr('x1', () => {
-          return this.x(previousRM.variables[lineX].value);
+          return this.x(
+            previousRM.variables.find((variable: any) => variable.name == lineX)
+              ?.value
+          );
         }) // x position of the first end of the line
         .attr('y1', () => {
           return this.y(cumulativeProb + rm.cprobRM);
         }) // y position of the first end of the line
         .attr('x2', () => {
-          return this.x(rm.variables[lineX].value);
+          return this.x(
+            rm.variables.find((variable: any) => variable.name == lineX)?.value
+          );
         }) // x position of the second end of the line
         .attr('y2', () => {
           return this.y(cumulativeProb + rm.cprobRM);
         }); // y position of the second end of the line
+    });
+  }
+
+  private drawCombinedRiskCurveLines() {
+    let sortedRMs: Object[];
+    let lineX: any;
+
+    this.solutions.forEach((solution) => {
+      this.rms = this.homeService.getRMs(solution);
+
+      let cumulativeProb: number = 1;
+      let previousRM: any;
+      sortedRMs = this.homeService.sortRMBy(
+        this.rms,
+        this.riskCurveAxis[this.id]
+      );
+      lineX = this.riskCurveAxis[this.id];
+
+      sortedRMs.map((rm: any, index: number) => {
+        //vertical lines
+        d3.select(`#chart`)
+          .append('line')
+          .attr('class', 'riskCurveLines')
+          .style('stroke', 'black') // colour the line
+          .style('stroke-linejoin', 'round')
+          .style('stroke-linecap', 'round')
+          .attr('x1', () => {
+            return this.x(
+              rm.variables.find((variable: any) => variable.name == lineX)
+                ?.value
+            );
+          }) // x position of the first end of the line
+          .attr('y1', () => {
+            return this.y(cumulativeProb);
+          }) // y position of the first end of the line
+          .attr('x2', () => {
+            return this.x(
+              rm.variables.find((variable: any) => variable.name == lineX)
+                ?.value
+            );
+          }) // x position of the second end of the line
+          .attr('y2', () => {
+            cumulativeProb -= rm.cprobRM;
+            return this.y(cumulativeProb);
+          }); // y position of the second end of the line
+
+        //horizontal lines
+        if (index == 0) {
+          return;
+        }
+        previousRM = sortedRMs[index - 1];
+        d3.select(`#chart`)
+          .append('line')
+          .attr('class', 'riskCurveLines')
+          .style('stroke', 'black') // colour the line
+          .style('stroke-linejoin', 'round')
+          .style('stroke-linecap', 'round')
+          .attr('x1', () => {
+            return this.x(
+              previousRM.variables.find(
+                (variable: any) => variable.name == lineX
+              )?.value
+            );
+          }) // x position of the first end of the line
+          .attr('y1', () => {
+            return this.y(cumulativeProb + rm.cprobRM);
+          }) // y position of the first end of the line
+          .attr('x2', () => {
+            return this.x(
+              rm.variables.find((variable: any) => variable.name == lineX)
+                ?.value
+            );
+          }) // x position of the second end of the line
+          .attr('y2', () => {
+            return this.y(cumulativeProb + rm.cprobRM);
+          }); // y position of the second end of the line
+      });
     });
   }
 }

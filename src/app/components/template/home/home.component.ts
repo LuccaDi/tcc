@@ -19,8 +19,6 @@ export class HomeComponent implements OnInit {
 
   public combinedRiskCurvesRendered: boolean = false;
 
-  public isDisabled: boolean = false;
-
   private scatterplotsX: ScaleLinear<number, number, never>[] = [];
   private xAxis: any;
   private newScatterplotXScale: ScaleLinear<number, number, never>[] = [];
@@ -58,6 +56,12 @@ export class HomeComponent implements OnInit {
   private symbol = d3.symbol();
 
   private chartColor = '#d3d3d3';
+  private predefinedColor = 'green';
+  private rmColor = 'orange';
+  private modelColor = '#a28ad2';
+  private predefinedSymbol = d3.symbolDiamond;
+  private rmSymbol = d3.symbolStar;
+  private modelSymbol = d3.symbolCircle;
   // private chartColor = 'red';
 
   constructor(private homeService: HomeService, private router: Router) {}
@@ -76,6 +80,12 @@ export class HomeComponent implements OnInit {
 
     this.rms = this.homeService.getRMs(this.data);
 
+    this.barChartAttributes = this.data.barChart.attributes;
+
+    this.attributesKeys = this.barChartAttributes.map(
+      (attribute: any) => attribute.name
+    );
+
     this.pen = this.data.barChart.pen;
     this.totalSum = this.data.barChart.totalSum;
 
@@ -83,6 +93,7 @@ export class HomeComponent implements OnInit {
     this.drawRiskCurves();
     this.drawBarChart();
     this.colorCharts();
+    this.addSubtitle();
   }
 
   //Scatterplots
@@ -187,12 +198,13 @@ export class HomeComponent implements OnInit {
   }
 
   private addScatterplotX() {
-    let domain: number[];
+    let domain: any[];
     let extentDomain: any;
 
     this.scatterplotAxis.forEach((varAxis, i) => {
-      domain = this.data.models.map((d) => {
-        return d.variables[varAxis[0]].value;
+      domain = this.data.models.map((model) => {
+        return model.variables.find((variable) => variable.name == varAxis[0])
+          ?.value;
       });
 
       extentDomain = d3.extent(domain);
@@ -216,12 +228,13 @@ export class HomeComponent implements OnInit {
   }
 
   private addScatterplotY() {
-    let domain: number[];
+    let domain: any[];
     let extentDomain: any;
 
     this.scatterplotAxis.forEach((varAxis, i) => {
-      domain = this.data.models.map((d) => {
-        return d.variables[varAxis[1]].value;
+      domain = this.data.models.map((model) => {
+        return model.variables.find((variable) => variable.name == varAxis[1])
+          ?.value;
       });
 
       extentDomain = d3.extent(domain);
@@ -311,31 +324,35 @@ export class HomeComponent implements OnInit {
           this.symbol
             .type((model) => {
               if (model.predefined == true) {
-                return d3.symbolSquare;
+                return this.predefinedSymbol;
               } else if (model.rm == true) {
-                return d3.symbolDiamond;
+                return this.rmSymbol;
               } else {
-                return d3.symbolCircle;
+                return this.modelSymbol;
               }
             })
             .size(50)
         )
-        .attr(
-          'transform',
-          (model) => `translate(
-            ${this.scatterplotsX[axisIndex](
-              model.variables[axis[0]].value
-            )}, ${this.scatterplotsY[axisIndex](
-            model.variables[axis[1]].value
-          )})`
-        )
+        .attr('transform', (model) => {
+          let valueX: any = model.variables.find(
+            (variable) => variable.name == axis[0]
+          )?.value;
+          let valueY: any = model.variables.find(
+            (variable) => variable.name == axis[1]
+          )?.value;
+
+          return `translate(
+            ${this.scatterplotsX[axisIndex](valueX)}, ${this.scatterplotsY[
+            axisIndex
+          ](valueY)})`;
+        })
         .attr('fill', (model) => {
           if (model.predefined == true) {
-            return 'red';
+            return this.predefinedColor;
           } else if (model.rm == true) {
-            return 'green';
+            return this.rmColor;
           } else {
-            return '#a28ad2';
+            return this.modelColor;
           }
         })
         .on('click', (modelClicked) => {
@@ -486,12 +503,13 @@ export class HomeComponent implements OnInit {
   }
 
   private addRiskCurveX() {
-    let domain: number[];
+    let domain: any[];
     let extentDomain: any;
 
     this.riskCurveAxis.forEach((varAxis, i) => {
-      domain = this.data.models.map((d) => {
-        return d.variables[varAxis].value;
+      domain = this.data.models.map((model) => {
+        return model.variables.find((variable) => variable.name == varAxis)
+          ?.value;
       });
 
       extentDomain = d3.extent(domain);
@@ -598,29 +616,35 @@ export class HomeComponent implements OnInit {
           this.symbol
             .type((model) => {
               if (model.predefined == true) {
-                return d3.symbolSquare;
+                return this.predefinedSymbol;
               } else if (model.rm == true) {
-                return d3.symbolDiamond;
+                return this.rmSymbol;
               } else {
-                return d3.symbolCircle;
+                return this.modelSymbol;
               }
             })
             .size(50)
         )
-        .attr(
-          'transform',
-          (model) =>
-            `translate(${this.riskCurvesX[axisIndex](
-              model.variables[axis].value
-            )}, ${this.riskCurvesY[axisIndex](model.variables[axis].cprob)})`
-        )
+        .attr('transform', (model) => {
+          let valueX: any = model.variables.find(
+            (variable) => variable.name == axis
+          )?.value;
+          let valueY: any = model.variables.find(
+            (variable) => variable.name == axis
+          )?.cprob;
+
+          return `translate(
+            ${this.riskCurvesX[axisIndex](valueX)}, ${this.riskCurvesY[
+            axisIndex
+          ](valueY)})`;
+        })
         .attr('fill', (model) => {
           if (model.predefined == true) {
-            return 'red';
+            return this.predefinedColor;
           } else if (model.rm == true) {
-            return 'green';
+            return this.rmColor;
           } else {
-            return '#a28ad2';
+            return this.modelColor;
           }
         })
         .on('click', (modelClicked) => {
@@ -649,13 +673,17 @@ export class HomeComponent implements OnInit {
           .transition()
           .duration(1000)
           .attr('x1', () => {
-            return this.riskCurvesX[axisIndex](rm.variables[axis].value);
+            return this.riskCurvesX[axisIndex](
+              rm.variables.find((variable: any) => variable.name == axis)?.value
+            );
           }) // x position of the first end of the line
           .attr('y1', () => {
             return this.riskCurvesY[axisIndex](cumulativeProb);
           }) // y position of the first end of the line
           .attr('x2', () => {
-            return this.riskCurvesX[axisIndex](rm.variables[axis].value);
+            return this.riskCurvesX[axisIndex](
+              rm.variables.find((variable: any) => variable.name == axis)?.value
+            );
           }) // x position of the second end of the line
           .attr('y2', () => {
             cumulativeProb -= rm.cprobRM;
@@ -678,14 +706,18 @@ export class HomeComponent implements OnInit {
           .duration(1000)
           .attr('x1', () => {
             return this.riskCurvesX[axisIndex](
-              previousRM.variables[axis].value
+              previousRM.variables.find(
+                (variable: any) => variable.name == axis
+              )?.value
             );
           }) // x position of the first end of the line
           .attr('y1', () => {
             return this.riskCurvesY[axisIndex](cumulativeProb + rm.cprobRM);
           }) // y position of the first end of the line
           .attr('x2', () => {
-            return this.riskCurvesX[axisIndex](rm.variables[axis].value);
+            return this.riskCurvesX[axisIndex](
+              rm.variables.find((variable: any) => variable.name == axis)?.value
+            );
           }) // x position of the second end of the line
           .attr('y2', () => {
             return this.riskCurvesY[axisIndex](cumulativeProb + rm.cprobRM);
@@ -712,10 +744,6 @@ export class HomeComponent implements OnInit {
       this.yAxis.tickSize(-this.width)
     );
 
-    d3.select(`#riskCurveDots${id}`)
-      .selectAll('.riskCurveModel')
-      .attr('d', this.symbol.size(50 / transform.k));
-
     d3.select(`#riskCurveDots${id}`).attr(
       'transform',
       `translate(${transform.x}, ${transform.y - this.marginTop}) scale(${
@@ -726,6 +754,7 @@ export class HomeComponent implements OnInit {
     d3.select(`#riskCurveDots${id}`)
       .selectAll('.riskCurveModel')
       .attr('d', this.symbol.size(50 / transform.k));
+    // .attr('d', d3.symbol().size(50 / transform.k));
 
     d3.select(`#riskCurveClip${id}`)
       .select('rect')
@@ -759,9 +788,6 @@ export class HomeComponent implements OnInit {
   //Bar Chart
   private drawBarChart() {
     const barHeight: string = '20px';
-    this.barChartAttributes = this.data.barChart.attributes;
-
-    this.attributesKeys = Object.keys(this.barChartAttributes);
 
     // Create the X-axis band scale
     const x = d3.scaleLinear().domain([0, 1]).range([0, 45]);
@@ -769,7 +795,7 @@ export class HomeComponent implements OnInit {
     const barChart = d3
       .select(`#barChart`)
       .selectAll('div')
-      .data(this.attributesKeys)
+      .data(this.barChartAttributes)
       .join('div')
       .attr('id', (d, i) => `attribute${i}`)
       .style('display', 'flex')
@@ -780,15 +806,15 @@ export class HomeComponent implements OnInit {
       .style('width', '45px')
       .append('p')
       .style('margin-right', '5px')
-      .text((d, i) => this.attributesKeys[i].toUpperCase());
+      .text((d: any) => d.name.toUpperCase());
 
-    this.attributesKeys.map((data: any, index) => {
+    this.barChartAttributes.map((attribute: any, index: number) => {
       d3.select(`#attribute${index}`)
         .append('div')
         .selectAll('svg')
-        .data(this.barChartAttributes[data].difference)
+        .data(attribute.difference)
         .join('svg')
-        .attr('id', (d, i) => data + i)
+        .attr('id', (d, i) => attribute.name + i)
         .attr('height', barHeight)
         .attr('width', '40px')
         .style('border', 'solid medium grey')
@@ -837,7 +863,11 @@ export class HomeComponent implements OnInit {
             .style('stroke-linejoin', 'round')
             .style('stroke-linecap', 'round')
             .attr('x1', () =>
-              this.scatterplotsX[axisIndex](model.variables[axis[0]].value)
+              this.scatterplotsX[axisIndex](
+                model.variables.find(
+                  (variable: any) => variable.name == axis[0]
+                )?.value
+              )
             ) // x position of the first end of the line
             .attr('y1', () =>
               this.scatterplotsY[axisIndex](
@@ -845,7 +875,11 @@ export class HomeComponent implements OnInit {
               )
             ) // y position of the first end of the line
             .attr('x2', () =>
-              this.scatterplotsX[axisIndex](model.variables[axis[0]].value)
+              this.scatterplotsX[axisIndex](
+                model.variables.find(
+                  (variable: any) => variable.name == axis[0]
+                )?.value
+              )
             ) // x position of the second end of the line
             .attr('y2', () =>
               this.scatterplotsY[axisIndex](
@@ -868,7 +902,11 @@ export class HomeComponent implements OnInit {
               )
             ) // x position of the first end of the line
             .attr('y1', () =>
-              this.scatterplotsY[axisIndex](model.variables[axis[1]].value)
+              this.scatterplotsY[axisIndex](
+                model.variables.find(
+                  (variable: any) => variable.name == axis[1]
+                )?.value
+              )
             ) // y position of the first end of the line
             .attr('x2', () =>
               this.scatterplotsX[axisIndex](
@@ -876,7 +914,11 @@ export class HomeComponent implements OnInit {
               )
             ) // x position of the second end of the line
             .attr('y2', () =>
-              this.scatterplotsY[axisIndex](model.variables[axis[1]].value)
+              this.scatterplotsY[axisIndex](
+                model.variables.find(
+                  (variable: any) => variable.name == axis[1]
+                )?.value
+              )
             ); // y position of the second end of the line
         });
 
@@ -892,7 +934,10 @@ export class HomeComponent implements OnInit {
             .style('stroke-linejoin', 'round')
             .style('stroke-linecap', 'round')
             .attr('x1', () =>
-              this.riskCurvesX[axisIndex](model.variables[axis].value)
+              this.riskCurvesX[axisIndex](
+                model.variables.find((variable: any) => variable.name == axis)
+                  ?.value
+              )
             ) // x position of the first end of the line
             .attr('y1', () =>
               this.riskCurvesY[axisIndex](
@@ -900,7 +945,10 @@ export class HomeComponent implements OnInit {
               )
             ) // y position of the first end of the line
             .attr('x2', () =>
-              this.riskCurvesX[axisIndex](model.variables[axis].value)
+              this.riskCurvesX[axisIndex](
+                model.variables.find((variable: any) => variable.name == axis)
+                  ?.value
+              )
             ) // x position of the second end of the line
             .attr('y2', () =>
               this.riskCurvesY[axisIndex](
@@ -923,7 +971,10 @@ export class HomeComponent implements OnInit {
               )
             ) // x position of the first end of the line
             .attr('y1', () =>
-              this.riskCurvesY[axisIndex](model.variables[axis].cprob)
+              this.riskCurvesY[axisIndex](
+                model.variables.find((variable: any) => variable.name == axis)
+                  ?.cprob
+              )
             ) // y position of the first end of the line
             .attr('x2', () =>
               this.riskCurvesX[axisIndex](
@@ -931,13 +982,22 @@ export class HomeComponent implements OnInit {
               )
             ) // x position of the second end of the line
             .attr('y2', () =>
-              this.riskCurvesY[axisIndex](model.variables[axis].cprob)
+              this.riskCurvesY[axisIndex](
+                model.variables.find((variable: any) => variable.name == axis)
+                  ?.cprob
+              )
             ); // y position of the second end of the line
         });
 
         //bar chart brushing
-        this.attributesKeys.map((tempD) => {
-          d3.select(`#${tempD + model.attributes[tempD]}`)
+        this.attributesKeys.map((key) => {
+          d3.select(
+            `#${
+              key +
+              model.attributes.find((attribute: any) => attribute.name == key)
+                .value
+            }`
+          )
             .style('background-color', 'lightblue')
             .style('border', 'solid medium green');
         });
@@ -995,24 +1055,17 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  public disableButtons(tabIndex: number) {
-    if (tabIndex == 0) {
-      this.isDisabled = false;
-    } else if (tabIndex == 1) {
-      this.isDisabled = true;
+  public renderCombinedRiskCurves(tabIndex: number) {
+    if (tabIndex == 1) {
       this.combinedRiskCurvesRendered = true;
     }
   }
 
   public updateSolutionData() {
     this.data = this.solutions[this.selectedSolution];
-
     this.rms = this.homeService.getRMs(this.data);
-
     this.barChartAttributes = this.data.barChart.attributes;
-
     this.attributesKeys = Object.keys(this.barChartAttributes);
-
     this.pen = this.data.barChart.pen;
     this.totalSum = this.data.barChart.totalSum;
 
@@ -1032,31 +1085,37 @@ export class HomeComponent implements OnInit {
           this.symbol
             .type((model) => {
               if (model.predefined == true) {
-                return d3.symbolSquare;
+                return this.predefinedSymbol;
               } else if (model.rm == true) {
-                return d3.symbolDiamond;
+                return this.rmSymbol;
               } else {
-                return d3.symbolCircle;
+                return this.modelSymbol;
               }
             })
             .size(50)
         )
         .transition()
         .duration(1000)
-        .attr(
-          'transform',
-          (model) => `translate(
-          ${this.scatterplotsX[axisIndex](
-            model.variables[axis[0]].value
-          )}, ${this.scatterplotsY[axisIndex](model.variables[axis[1]].value)})`
-        )
+        .attr('transform', (model) => {
+          let valueX: any = model.variables.find(
+            (variable) => variable.name == axis[0]
+          )?.value;
+          let valueY: any = model.variables.find(
+            (variable) => variable.name == axis[1]
+          )?.value;
+
+          return `translate(
+            ${this.scatterplotsX[axisIndex](valueX)}, ${this.scatterplotsY[
+            axisIndex
+          ](valueY)})`;
+        })
         .attr('fill', (model) => {
           if (model.predefined == true) {
-            return 'red';
+            return this.predefinedColor;
           } else if (model.rm == true) {
-            return 'green';
+            return this.rmColor;
           } else {
-            return '#a28ad2';
+            return this.modelColor;
           }
         });
     });
@@ -1071,31 +1130,37 @@ export class HomeComponent implements OnInit {
           this.symbol
             .type((model) => {
               if (model.predefined == true) {
-                return d3.symbolSquare;
+                return this.predefinedSymbol;
               } else if (model.rm == true) {
-                return d3.symbolDiamond;
+                return this.rmSymbol;
               } else {
-                return d3.symbolCircle;
+                return this.modelSymbol;
               }
             })
             .size(50)
         )
         .transition()
         .duration(1000)
-        .attr(
-          'transform',
-          (model) =>
-            `translate(${this.riskCurvesX[axisIndex](
-              model.variables[axis].value
-            )}, ${this.riskCurvesY[axisIndex](model.variables[axis].cprob)})`
-        )
+        .attr('transform', (model) => {
+          let valueX: any = model.variables.find(
+            (variable) => variable.name == axis
+          )?.value;
+          let valueY: any = model.variables.find(
+            (variable) => variable.name == axis
+          )?.cprob;
+
+          return `translate(
+            ${this.riskCurvesX[axisIndex](valueX)}, ${this.riskCurvesY[
+            axisIndex
+          ](valueY)})`;
+        })
         .attr('fill', (model) => {
           if (model.predefined == true) {
-            return 'red';
+            return this.predefinedColor;
           } else if (model.rm == true) {
-            return 'green';
+            return this.rmColor;
           } else {
-            return '#a28ad2';
+            return this.modelColor;
           }
         });
     });
@@ -1105,12 +1170,12 @@ export class HomeComponent implements OnInit {
     this.drawRiskCurveLines();
 
     //bar chart changes
-    this.attributesKeys.map((data: any, index) => {
+    this.barChartAttributes.map((attribute: any, index: number) => {
       d3.select(`#attribute${index}`)
         // .append('div')
         // .selectAll('svg')
         .selectAll(`.barChart`)
-        .data(this.barChartAttributes[data].difference)
+        .data(attribute.difference)
         .transition()
         .duration(1000)
         .attr('width', (d: any) => x(d) - x(0));
@@ -1149,5 +1214,32 @@ export class HomeComponent implements OnInit {
             ])
           )}', '_blank', '${this.features}'); return false;`
       );
+  }
+
+  private addSubtitle() {
+    let subtitle = d3.select('#subtitle');
+
+    let symbol = d3.symbol();
+
+    let subtitles = ['Predefined RM', 'RM', 'Other Models'];
+    let symbols = [this.predefinedSymbol, this.rmSymbol, this.modelSymbol];
+    let colors = [this.predefinedColor, this.rmColor, this.modelColor];
+
+    subtitle
+      .selectAll('path')
+      .data(symbols)
+      .join('path')
+      .attr('d', symbol.type((d) => d).size(100))
+      .attr('fill', (d, i) => colors[i])
+      .attr('transform', (d, i) => `translate(${40}, ${(i + 1) * 20})`);
+
+    subtitle
+      .selectAll('text')
+      .data(subtitles)
+      .join('text')
+      .text((d) => d)
+      .style('fill', (d, i) => colors[i])
+      .attr('transform', (d, i) => `translate(${50}, ${(i + 1) * 20})`)
+      .style('alignment-baseline', 'middle');
   }
 }
